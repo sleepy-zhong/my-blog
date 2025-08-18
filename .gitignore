@@ -1,0 +1,28 @@
+# =============== 通用 ===============
+.DS_Store
+Thumbs.db
+*.log
+.idea
+.vscode
+npm-debug.log*
+
+# =============== 前端 ===============
+fontend/node_modules/
+fontend/dist/
+fontend/.env
+fontend/.env.*
+fontend/coverage/
+
+# =============== 后端 ===============
+backend/node_modules/
+backend/.env
+backend/.env.*
+backend/uploads/
+backend/coverage/
+backend/storage/logs/
+!backend/uploads/.gitkeep
+
+# =============== 系统文件 ===============
+*.swp
+*.swo
+*~
