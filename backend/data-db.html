@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>TechBlogDB 数据库结构说明</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    h2 { color: #2c3e50; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    th { background: #f5f5f5; }
+    .comment { color: #888; font-size: 0.95em; }
+  </style>
+</head>
+<body>
+  <h1>TechBlogDB 数据库结构说明</h1>
+
+  <h2>1. 用户与权限</h2>
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="12">Users</td><td>UserID</td><td>INT, PK, AUTO_INCREMENT</td><td>用户唯一标识</td></tr>
+    <tr><td>Username</td><td>VARCHAR(50), UNIQUE</td><td>登录用户名</td></tr>
+    <tr><td>Email</td><td>VARCHAR(100), UNIQUE</td><td>用户邮箱</td></tr>
+    <tr><td>PasswordHash</td><td>CHAR(60)</td><td>BCrypt加密的密码</td></tr>
+    <tr><td>PhoneNumber</td><td>VARCHAR(20), UNIQUE</td><td>手机号（可用于登录）</td></tr>
+    <tr><td>DisplayName</td><td>VARCHAR(100)</td><td>显示名称</td></tr>
+    <tr><td>Bio</td><td>TEXT</td><td>个人简介</td></tr>
+    <tr><td>AvatarURL</td><td>VARCHAR(255)</td><td>头像URL</td></tr>
+    <tr><td>Role</td><td>ENUM('admin','author','editor','subscriber')</td><td>用户角色</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+    <tr><td>LastLogin</td><td>TIMESTAMP</td><td>最后登录时间</td></tr>
+    <tr><td>IsActive</td><td>BOOLEAN</td><td>账户状态</td></tr>
+    <tr><td colspan="3" class="comment">系统用户表</td></tr>
+  </table>
+
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="2">UserRoles</td><td>UserID</td><td>INT</td><td>用户ID</td></tr>
+    <tr><td>RoleID</td><td>INT</td><td>角色ID</td></tr>
+  </table>
+
+  <h2>2. 内容管理</h2>
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="13">Posts</td><td>PostID</td><td>INT, PK, AUTO_INCREMENT</td><td>文章唯一标识</td></tr>
+    <tr><td>UserID</td><td>INT</td><td>作者ID</td></tr>
+    <tr><td>Title</td><td>VARCHAR(200)</td><td>文章标题</td></tr>
+    <tr><td>Slug</td><td>VARCHAR(220), UNIQUE</td><td>URL友好标识</td></tr>
+    <tr><td>Content</td><td>LONGTEXT</td><td>文章内容</td></tr>
+    <tr><td>Excerpt</td><td>VARCHAR(300)</td><td>文章摘要</td></tr>
+    <tr><td>Status</td><td>ENUM('draft','published','archived')</td><td>文章状态</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+    <tr><td>UpdatedAt</td><td>TIMESTAMP</td><td>更新时间</td></tr>
+    <tr><td>PublishedAt</td><td>TIMESTAMP</td><td>发布时间</td></tr>
+    <tr><td>ViewCount</td><td>INT</td><td>浏览次数</td></tr>
+    <tr><td>FeaturedImageURL</td><td>VARCHAR(255)</td><td>封面图URL</td></tr>
+    <tr><td>CurrentRevisionID</td><td>INT</td><td>当前生效的修订版本</td></tr>
+  </table>
+
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="9">PostRevisions</td><td>RevisionID</td><td>INT, PK, AUTO_INCREMENT</td><td>修订版本ID</td></tr>
+    <tr><td>PostID</td><td>INT</td><td>关联文章ID</td></tr>
+    <tr><td>UserID</td><td>INT</td><td>修改者ID</td></tr>
+    <tr><td>Title</td><td>VARCHAR(200)</td><td>修订标题</td></tr>
+    <tr><td>Content</td><td>LONGTEXT</td><td>修订内容</td></tr>
+    <tr><td>Excerpt</td><td>VARCHAR(300)</td><td>修订摘要</td></tr>
+    <tr><td>RevisionNotes</td><td>TEXT</td><td>修订说明</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>修订时间</td></tr>
+    <tr><td>RevisionType</td><td>ENUM('initial','update','rollback')</td><td>修订类型</td></tr>
+  </table>
+
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="9">Attachments</td><td>AttachmentID</td><td>INT, PK, AUTO_INCREMENT</td><td>附件ID</td></tr>
+    <tr><td>PostID</td><td>INT</td><td>关联文章</td></tr>
+    <tr><td>UserID</td><td>INT</td><td>上传者</td></tr>
+    <tr><td>OriginalName</td><td>VARCHAR(255)</td><td>原始文件名</td></tr>
+    <tr><td>StoredName</td><td>VARCHAR(255), UNIQUE</td><td>存储文件名</td></tr>
+    <tr><td>MimeType</td><td>VARCHAR(100)</td><td>文件类型</td></tr>
+    <tr><td>FileSize</td><td>INT</td><td>文件大小(字节)</td></tr>
+    <tr><td>UploadedAt</td><td>TIMESTAMP</td><td>上传时间</td></tr>
+    <tr><td>Description</td><td>VARCHAR(255)</td><td>文件描述</td></tr>
+  </table>
+
+  <h2>3. 分类与标签</h2>
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="7">Categories</td><td>CategoryID</td><td>INT, PK, AUTO_INCREMENT</td><td>分类ID</td></tr>
+    <tr><td>Name</td><td>VARCHAR(50), UNIQUE</td><td>分类名称</td></tr>
+    <tr><td>Description</td><td>VARCHAR(200)</td><td>分类描述</td></tr>
+    <tr><td>ParentCategoryID</td><td>INT</td><td>父分类ID</td></tr>
+    <tr><td>CreatedBy</td><td>INT</td><td>创建者</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+    <tr><td>UpdatedAt</td><td>TIMESTAMP</td><td>更新时间</td></tr>
+  </table>
+
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="5">Tags</td><td>TagID</td><td>INT, PK, AUTO_INCREMENT</td><td>标签ID</td></tr>
+    <tr><td>Name</td><td>VARCHAR(50), UNIQUE</td><td>标签名称</td></tr>
+    <tr><td>Description</td><td>VARCHAR(200)</td><td>标签描述</td></tr>
+    <tr><td>CreatedBy</td><td>INT</td><td>创建者</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+  </table>
+
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="2">PostCategories</td><td>PostID</td><td>INT</td><td>文章ID</td></tr>
+    <tr><td>CategoryID</td><td>INT</td><td>分类ID</td></tr>
+  </table>
+
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="2">PostTags</td><td>PostID</td><td>INT</td><td>文章ID</td></tr>
+    <tr><td>TagID</td><td>INT</td><td>标签ID</td></tr>
+  </table>
+
+  <h2>4. 评论系统</h2>
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="8">Comments</td><td>CommentID</td><td>INT, PK, AUTO_INCREMENT</td><td>评论ID</td></tr>
+    <tr><td>PostID</td><td>INT</td><td>文章ID</td></tr>
+    <tr><td>UserID</td><td>INT</td><td>用户ID</td></tr>
+    <tr><td>ParentCommentID</td><td>INT</td><td>父评论ID</td></tr>
+    <tr><td>Content</td><td>TEXT</td><td>评论内容</td></tr>
+    <tr><td>Status</td><td>ENUM('approved','pending','spam')</td><td>审核状态</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+    <tr><td>LastEditedAt</td><td>TIMESTAMP</td><td>编辑时间</td></tr>
+  </table>
+
+  <h2>5. 日志与审计</h2>
+  <table>
+    <tr><th>表名</th><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td rowspan="9">OperationLogs</td><td>LogID</td><td>INT, PK, AUTO_INCREMENT</td><td>日志ID</td></tr>
+    <tr><td>UserID</td><td>INT</td><td>操作用户ID</td></tr>
+    <tr><td>OperationType</td><td>VARCHAR(50)</td><td>操作类型</td></tr>
+    <tr><td>TargetType</td><td>ENUM('post','comment','user','category','tag','revision')</td><td>操作对象类型</td></tr>
+    <tr><td>TargetID</td><td>INT</td><td>操作对象ID</td></tr>
+    <tr><td>Details</td><td>JSON</td><td>操作详情</td></tr>
+    <tr><td>IPAddress</td><td>VARCHAR(45)</td><td>操作IP</td></tr>
+    <tr><td>UserAgent</td><td>VARCHAR(255)</td><td>浏览器标识</td></tr>
+    <tr><td>Timestamp</td><td>TIMESTAMP</td><td>操作时间</td></tr>
+  </table>
+</body>
+</html>

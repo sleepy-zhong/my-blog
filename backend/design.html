@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>TechBlogDB 系统设计文档</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0 0 0 0; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px 32px 48px; }
+    h1, h2, h3 { color: #2c3e50; }
+    h2 { border-bottom: 2px solid #eee; padding-bottom: 4px; margin-top: 48px; }
+    h3 { margin-top: 32px; }
+    pre { background: #f8f8f8; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    .mermaid { background: #fff; border: 1px solid #eee; border-radius: 6px; margin: 16px 0; }
+    .table-detail { margin-bottom: 36px; }
+    .table-detail th, .table-detail td { font-size: 15px; }
+    .table-detail th { background: #f0f6fa; }
+    .table-detail td { background: #fafcff; }
+    .scene { background: #f8f8f8; border-left: 4px solid #2980b9; padding: 10px 18px; margin: 18px 0; color: #444; }
+    .faq { background: #f9f9f9; border-left: 4px solid #e67e22; padding: 10px 18px; margin: 18px 0; color: #444; }
+    #toc {
+      position: fixed;
+      top: 80px;
+      right: 32px;
+      width: 280px;
+      background: rgba(255,255,255,0.97);
+      border: 1px solid #eee;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      padding: 18px 18px 18px 24px;
+      z-index: 100;
+      font-size: 15px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #toc ul { list-style: none; padding: 0; margin: 0; }
+    #toc li { margin: 8px 0; }
+    #toc a { color: #2980b9; text-decoration: none; }
+    #toc a:hover { text-decoration: underline; }
+    @media (max-width: 900px) {
+      #toc { display: none; }
+      .container { padding: 16px; }
+    }
+  </style>
+  <script type="module">
+    window.addEventListener('DOMContentLoaded', () => {
+      const tocLinks = document.querySelectorAll('#toc a');
+      const sections = Array.from(tocLinks).map(link => document.getElementById(link.getAttribute('href').slice(1)));
+      window.addEventListener('scroll', () => {
+        let idx = 0;
+        for (let i = 0; i < sections.length; i++) {
+          if (sections[i].getBoundingClientRect().top < 120) idx = i;
+        }
+        tocLinks.forEach((l, i) => l.style.fontWeight = i === idx ? 'bold' : 'normal');
+      });
+    });
+  </script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+</head>
+<body>
+<div id="toc">
+  <b>目录</b>
+  <ul>
+    <li><a href="#overview">系统总览</a></li>
+    <li><a href="#roles">系统角色与权限</a></li>
+    <li><a href="#business-flow">业务流程图</a></li>
+    <li><a href="#modules">系统功能模块</a></li>
+    <li><a href="#user-flow">用户操作流程</a></li>
+    <li><a href="#data-flow">数据流图</a></li>
+    <li><a href="#scenes">典型业务场景</a></li>
+    <li><a href="#er">ER 图</a></li>
+    <li><a href="#tables">表结构详细说明</a></li>
+    <li><a href="#faq">FAQ与设计说明</a></li>
+  </ul>
+</div>
+<div class="container">
+  <h1 id="overview">TechBlogDB 博客系统设计文档</h1>
+  <p>本系统为个人/团队技术博客，支持多角色、文章管理、评论、分类、标签、修订、操作日志、附件等功能，结构灵活，安全可扩展。适用于技术分享、团队协作、内容管理等多种场景。</p>
+
+  <h2 id="roles">系统角色与权限</h2>
+  <ul>
+    <li><b>管理员（admin）</b>：拥有全部权限，可管理用户、文章、评论、分类、标签、附件、系统设置、查看操作日志等。</li>
+    <li><b>作者（author）</b>：可发布、编辑、删除自己的文章，上传附件，管理自己文章的评论。</li>
+    <li><b>编辑（editor）</b>：可审核、编辑所有文章和评论，管理分类、标签。</li>
+    <li><b>订阅者（subscriber）</b>：可浏览、评论、收藏、订阅内容，无后台管理权限。</li>
+  </ul>
+  <div class="scene">
+    <b>举例：</b>作者A发布新文章，编辑B可审核并修改，管理员C可删除该文章。普通用户D只能阅读和评论。
+  </div>
+
+  <h2 id="business-flow">业务流程图</h2>
+  <p>展示用户从注册、内容创作、互动到后台管理的主要业务流转。</p>
+  <div class="mermaid">
+    %% 业务流程图
+    graph TD
+      A[访客/用户] -->|注册/登录| B(用户中心)
+      B -->|发布/编辑文章| C(文章管理)
+      C -->|保存/修订| D[文章修订历史]
+      C -->|上传附件| E[附件管理]
+      C -->|设置分类/标签| F[分类标签管理]
+      A -->|浏览/搜索| C
+      A -->|发表评论| G[评论系统]
+      B -->|个人设置| H[用户资料]
+      B -->|操作行为| I[操作日志]
+      I -.->|后台审计| J[管理员]
+  </div>
+  <div class="scene">
+    <b>说明：</b>所有重要操作（如文章发布、评论、资料修改等）均会记录到操作日志，便于审计和追溯。
+  </div>
+
+  <h2 id="modules">系统功能模块</h2>
+  <p>系统功能模块之间的关系如下：</p>
+  <div class="mermaid">
+    %% 功能模块图
+    graph LR
+      U[用户与权限]
+      A[文章管理]
+      C[分类管理]
+      T[标签管理]
+      R[修订历史]
+      M[评论系统]
+      F[附件管理]
+      L[操作日志]
+      S[系统设置]
+      U --> A
+      U --> M
+      U --> F
+      U --> L
+      A --> R
+      A --> C
+      A --> T
+      S --> U
+      S --> A
+      S --> C
+      S --> T
+      S --> M
+      S --> F
+      S --> L
+  </div>
+  <div class="scene">
+    <b>说明：</b>各模块既可独立扩展，也可灵活组合，便于后期功能升级。
+  </div>
+
+  <h2 id="user-flow">用户操作流程</h2>
+  <p>用户常见操作路径如下：</p>
+  <div class="mermaid">
+    %% 用户操作流程
+    graph TD
+      A[用户/访客] -->|注册/登录| B[用户中心]
+      B -->|发布文章| C[文章管理]
+      C -->|编辑/保存| D[修订历史]
+      B -->|上传附件| E[附件管理]
+      B -->|评论| F[评论系统]
+      B -->|个人设置| G[用户资料]
+      B -->|操作行为| H[操作日志]
+      A -->|浏览文章| C
+      A -->|浏览评论| F
+  </div>
+  <div class="scene">
+    <b>说明：</b>所有用户操作均有权限校验，敏感操作需登录并具备相应角色。
+  </div>
+
+  <h2 id="data-flow">数据流图</h2>
+  <p>系统各部分数据流向如下：</p>
+  <div class="mermaid">
+    %% 数据流图
+    flowchart LR
+      User[用户/访客]
+      Backend[后端服务]
+      DB[数据库]
+      User <--> Backend
+      Backend <--> DB
+      Backend <--> File[文件存储(附件)]
+      Backend <--> Log[操作日志]
+      Backend <--> Email[邮件服务]
+  </div>
+  <div class="scene">
+    <b>说明：</b>所有数据均通过后端服务流转，保证安全与一致性。
+  </div>
+
+  <h2 id="scenes">典型业务场景</h2>
+  <ul>
+    <li>用户注册/登录（支持手机号、邮箱、用户名）</li>
+    <li>文章发布、编辑、修订、删除、历史版本回滚</li>
+    <li>评论发布、楼中楼回复、评论审核</li>
+    <li>分类/标签管理，支持多级分类和多标签</li>
+    <li>附件上传、管理、关联文章</li>
+    <li>操作日志自动记录所有重要操作</li>
+    <li>后台管理：用户、内容、评论、日志、系统设置等</li>
+  </ul>
+  <div class="scene">
+    <b>举例：</b>作者A发布文章后，编辑B可修改并保存新修订，管理员C可删除该文章，所有操作均有日志记录。
+  </div>
+
+  <h2 id="er">ER 图（含中文注释）</h2>
+  <p>下图展示了各表之间的主外键关系及主要字段：</p>
+  <div class="mermaid">
+    %% ER 图
+    erDiagram
+      Users {
+        INT UserID PK "用户ID"
+        VARCHAR(20) PhoneNumber "手机号"
+        VARCHAR(50) Username "用户名"
+        VARCHAR(100) Email "邮箱"
+        CHAR(60) PasswordHash "密码哈希"
+        VARCHAR(100) DisplayName "显示名"
+        TEXT Bio "简介"
+        VARCHAR(255) AvatarURL "头像"
+        ENUM Role "角色"
+        TIMESTAMP CreatedAt "创建时间"
+        TIMESTAMP LastLogin "最后登录"
+        BOOLEAN IsActive "状态"
+      }
+      Posts {
+        INT PostID PK "文章ID"
+        INT UserID FK "作者ID"
+        VARCHAR(200) Title "标题"
+        VARCHAR(220) Slug "URL标识"
+        LONGTEXT Content "内容"
+        VARCHAR(300) Excerpt "摘要"
+        ENUM Status "状态"
+        TIMESTAMP CreatedAt "创建"
+        TIMESTAMP UpdatedAt "更新"
+        TIMESTAMP PublishedAt "发布"
+        INT ViewCount "浏览"
+        VARCHAR(255) FeaturedImageURL "封面"
+        INT CurrentRevisionID "修订ID"
+      }
+      PostRevisions {
+        INT RevisionID PK "修订ID"
+        INT PostID FK "文章ID"
+        INT UserID FK "修改者"
+        VARCHAR(200) Title "标题"
+        LONGTEXT Content "内容"
+        VARCHAR(300) Excerpt "摘要"
+        TEXT RevisionNotes "说明"
+        TIMESTAMP CreatedAt "修订时间"
+        ENUM RevisionType "类型"
+      }
+      OperationLogs {
+        INT LogID PK "日志ID"
+        INT UserID FK "用户ID"
+        VARCHAR(50) OperationType "操作类型"
+        ENUM TargetType "对象类型"
+        INT TargetID "对象ID"
+        JSON Details "详情"
+        VARCHAR(45) IPAddress "IP"
+        VARCHAR(255) UserAgent "UA"
+        TIMESTAMP Timestamp "时间"
+      }
+      Categories {
+        INT CategoryID PK "分类ID"
+        VARCHAR(50) Name "名称"
+        VARCHAR(200) Description "描述"
+        INT ParentCategoryID FK "父分类"
+        INT CreatedBy FK "创建者"
+        TIMESTAMP CreatedAt "创建"
+        TIMESTAMP UpdatedAt "更新"
+      }
+      Tags {
+        INT TagID PK "标签ID"
+        VARCHAR(50) Name "名称"
+        VARCHAR(200) Description "描述"
+        INT CreatedBy FK "创建者"
+        TIMESTAMP CreatedAt "创建"
+      }
+      PostCategories {
+        INT PostID FK "文章ID"
+        INT CategoryID FK "分类ID"
+      }
+      PostTags {
+        INT PostID FK "文章ID"
+        INT TagID FK "标签ID"
+      }
+      Comments {
+        INT CommentID PK "评论ID"
+        INT PostID FK "文章ID"
+        INT UserID FK "用户ID"
+        INT ParentCommentID FK "父评论"
+        TEXT Content "内容"
+        ENUM Status "状态"
+        TIMESTAMP CreatedAt "创建"
+        TIMESTAMP LastEditedAt "编辑"
+      }
+      Attachments {
+        INT AttachmentID PK "附件ID"
+        INT PostID FK "文章ID"
+        INT UserID FK "上传者"
+        VARCHAR(255) OriginalName "原文件"
+        VARCHAR(255) StoredName "存储名"
+        VARCHAR(100) MimeType "类型"
+        INT FileSize "大小"
+        TIMESTAMP UploadedAt "上传"
+        VARCHAR(255) Description "描述"
+      }
+      Users ||--o{ Posts : "发布"
+      Users ||--o{ PostRevisions : "修订"
+      Users ||--o{ OperationLogs : "操作"
+      Users ||--o{ Comments : "评论"
+      Users ||--o{ Attachments : "上传"
+      Posts ||--o{ PostRevisions : "有"
+      Posts ||--o{ Comments : "有"
+      Posts ||--o{ Attachments : "有"
+      Posts ||--o{ PostCategories : "属于"
+      Posts ||--o{ PostTags : "有"
+      Categories ||--o{ PostCategories : "包含"
+      Tags ||--o{ PostTags : "包含"
+      Comments ||--o{ Comments : "回复"
+  </div>
+  <div class="scene">
+    <b>说明：</b>所有主外键关系均有注释，便于理解表间数据流转。
+  </div>
+
+  <h2 id="tables">表结构详细说明</h2>
+  <h3>Users（用户表）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>UserID</td><td>INT, PK, AUTO_INCREMENT</td><td>用户唯一标识</td></tr>
+    <tr><td>PhoneNumber</td><td>VARCHAR(20), UNIQUE</td><td>手机号（可用于登录）</td></tr>
+    <tr><td>Username</td><td>VARCHAR(50), UNIQUE</td><td>登录用户名</td></tr>
+    <tr><td>Email</td><td>VARCHAR(100), UNIQUE</td><td>用户邮箱</td></tr>
+    <tr><td>PasswordHash</td><td>CHAR(60)</td><td>BCrypt加密的密码</td></tr>
+    <tr><td>DisplayName</td><td>VARCHAR(100)</td><td>显示名称</td></tr>
+    <tr><td>Bio</td><td>TEXT</td><td>个人简介</td></tr>
+    <tr><td>AvatarURL</td><td>VARCHAR(255)</td><td>头像URL</td></tr>
+    <tr><td>Role</td><td>ENUM('admin','author','editor','subscriber')</td><td>用户角色</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+    <tr><td>LastLogin</td><td>TIMESTAMP</td><td>最后登录时间</td></tr>
+    <tr><td>IsActive</td><td>BOOLEAN</td><td>账户状态</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>支持手机号、邮箱、用户名三种登录方式，角色字段决定后台权限。
+  </div>
+
+  <h3>Posts（文章表）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>PostID</td><td>INT, PK, AUTO_INCREMENT</td><td>文章唯一标识</td></tr>
+    <tr><td>UserID</td><td>INT, FK</td><td>作者ID，关联Users</td></tr>
+    <tr><td>Title</td><td>VARCHAR(200)</td><td>文章标题</td></tr>
+    <tr><td>Slug</td><td>VARCHAR(220), UNIQUE</td><td>URL友好标识</td></tr>
+    <tr><td>Content</td><td>LONGTEXT</td><td>文章内容</td></tr>
+    <tr><td>Excerpt</td><td>VARCHAR(300)</td><td>文章摘要</td></tr>
+    <tr><td>Status</td><td>ENUM('draft','published','archived')</td><td>文章状态</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+    <tr><td>UpdatedAt</td><td>TIMESTAMP</td><td>更新时间</td></tr>
+    <tr><td>PublishedAt</td><td>TIMESTAMP</td><td>发布时间</td></tr>
+    <tr><td>ViewCount</td><td>INT</td><td>浏览次数</td></tr>
+    <tr><td>FeaturedImageURL</td><td>VARCHAR(255)</td><td>封面图URL</td></tr>
+    <tr><td>CurrentRevisionID</td><td>INT</td><td>当前生效的修订版本</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>文章可多次修订，支持草稿、发布、归档等状态，支持封面、摘要、SEO友好URL。
+  </div>
+
+  <h3>PostRevisions（文章修订历史）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>RevisionID</td><td>INT, PK, AUTO_INCREMENT</td><td>修订版本ID</td></tr>
+    <tr><td>PostID</td><td>INT, FK</td><td>关联文章ID</td></tr>
+    <tr><td>UserID</td><td>INT, FK</td><td>修改者ID</td></tr>
+    <tr><td>Title</td><td>VARCHAR(200)</td><td>修订标题</td></tr>
+    <tr><td>Content</td><td>LONGTEXT</td><td>修订内容</td></tr>
+    <tr><td>Excerpt</td><td>VARCHAR(300)</td><td>修订摘要</td></tr>
+    <tr><td>RevisionNotes</td><td>TEXT</td><td>修订说明</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>修订时间</td></tr>
+    <tr><td>RevisionType</td><td>ENUM('initial','update','rollback')</td><td>修订类型</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>每次文章内容或标题变更时自动保存历史版本，便于回滚和审计。
+  </div>
+
+  <h3>OperationLogs（操作日志）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>LogID</td><td>INT, PK, AUTO_INCREMENT</td><td>日志ID</td></tr>
+    <tr><td>UserID</td><td>INT, FK</td><td>操作用户ID</td></tr>
+    <tr><td>OperationType</td><td>VARCHAR(50)</td><td>操作类型（如create、update、delete、login等）</td></tr>
+    <tr><td>TargetType</td><td>ENUM('post','comment','user','category','tag','revision')</td><td>操作对象类型</td></tr>
+    <tr><td>TargetID</td><td>INT</td><td>操作对象ID</td></tr>
+    <tr><td>Details</td><td>JSON</td><td>操作详情（如变更前后数据）</td></tr>
+    <tr><td>IPAddress</td><td>VARCHAR(45)</td><td>操作IP</td></tr>
+    <tr><td>UserAgent</td><td>VARCHAR(255)</td><td>浏览器标识</td></tr>
+    <tr><td>Timestamp</td><td>TIMESTAMP</td><td>操作时间</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>所有重要操作均自动记录，便于安全审计和问题追踪。
+  </div>
+
+  <h3>Categories（分类表）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>CategoryID</td><td>INT, PK, AUTO_INCREMENT</td><td>分类ID</td></tr>
+    <tr><td>Name</td><td>VARCHAR(50), UNIQUE</td><td>分类名称</td></tr>
+    <tr><td>Description</td><td>VARCHAR(200)</td><td>分类描述</td></tr>
+    <tr><td>ParentCategoryID</td><td>INT, FK</td><td>父分类ID，支持多级分类</td></tr>
+    <tr><td>CreatedBy</td><td>INT, FK</td><td>创建者</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+    <tr><td>UpdatedAt</td><td>TIMESTAMP</td><td>更新时间</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>支持多级分类，便于内容分层管理。
+  </div>
+
+  <h3>Tags（标签表）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>TagID</td><td>INT, PK, AUTO_INCREMENT</td><td>标签ID</td></tr>
+    <tr><td>Name</td><td>VARCHAR(50), UNIQUE</td><td>标签名称</td></tr>
+    <tr><td>Description</td><td>VARCHAR(200)</td><td>标签描述</td></tr>
+    <tr><td>CreatedBy</td><td>INT, FK</td><td>创建者</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>标签可自由扩展，支持文章多标签。
+  </div>
+
+  <h3>PostCategories（文章-分类关联表）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>PostID</td><td>INT, FK</td><td>文章ID</td></tr>
+    <tr><td>CategoryID</td><td>INT, FK</td><td>分类ID</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>一篇文章可属于多个分类。
+  </div>
+
+  <h3>PostTags（文章-标签关联表）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>PostID</td><td>INT, FK</td><td>文章ID</td></tr>
+    <tr><td>TagID</td><td>INT, FK</td><td>标签ID</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>一篇文章可有多个标签，便于内容检索。
+  </div>
+
+  <h3>Comments（评论表）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>CommentID</td><td>INT, PK, AUTO_INCREMENT</td><td>评论ID</td></tr>
+    <tr><td>PostID</td><td>INT, FK</td><td>文章ID</td></tr>
+    <tr><td>UserID</td><td>INT, FK</td><td>用户ID</td></tr>
+    <tr><td>ParentCommentID</td><td>INT, FK</td><td>父评论ID，支持楼中楼</td></tr>
+    <tr><td>Content</td><td>TEXT</td><td>评论内容</td></tr>
+    <tr><td>Status</td><td>ENUM('approved','pending','spam')</td><td>审核状态</td></tr>
+    <tr><td>CreatedAt</td><td>TIMESTAMP</td><td>创建时间</td></tr>
+    <tr><td>LastEditedAt</td><td>TIMESTAMP</td><td>编辑时间</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>支持评论回复、审核、屏蔽等功能。
+  </div>
+
+  <h3>Attachments（附件表）</h3>
+  <table class="table-detail">
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td>AttachmentID</td><td>INT, PK, AUTO_INCREMENT</td><td>附件ID</td></tr>
+    <tr><td>PostID</td><td>INT, FK</td><td>关联文章</td></tr>
+    <tr><td>UserID</td><td>INT, FK</td><td>上传者</td></tr>
+    <tr><td>OriginalName</td><td>VARCHAR(255)</td><td>原始文件名</td></tr>
+    <tr><td>StoredName</td><td>VARCHAR(255), UNIQUE</td><td>存储文件名</td></tr>
+    <tr><td>MimeType</td><td>VARCHAR(100)</td><td>文件类型</td></tr>
+    <tr><td>FileSize</td><td>INT</td><td>文件大小(字节)</td></tr>
+    <tr><td>UploadedAt</td><td>TIMESTAMP</td><td>上传时间</td></tr>
+    <tr><td>Description</td><td>VARCHAR(255)</td><td>文件描述</td></tr>
+  </table>
+  <div class="scene">
+    <b>典型用法：</b>支持图片、文档等多种类型附件上传，便于丰富内容。
+  </div>
+
+  <h2 id="faq">FAQ与设计说明</h2>
+  <div class="faq">
+    <b>Q: 为什么要有操作日志表？</b><br>
+    A: 便于安全审计、问题追踪、合规要求，所有重要操作均自动记录。
+  </div>
+  <div class="faq">
+    <b>Q: 为什么评论表支持父评论ID？</b><br>
+    A: 支持楼中楼/二级评论，提升互动体验。
+  </div>
+  <div class="faq">
+    <b>Q: 文章修订历史如何自动保存？</b><br>
+    A: 通过触发器自动记录每次内容/标题变更，便于回滚和审计。
+  </div>
+  <div class="faq">
+    <b>Q: 用户表为什么支持手机号、邮箱、用户名三种登录？</b><br>
+    A: 提升用户体验，适应不同用户习惯。
+  </div>
+  <div class="faq">
+    <b>Q: 系统如何保证数据一致性？</b><br>
+    A: 通过外键约束、触发器、日志等机制，保证数据安全和一致。
+  </div>
+</div>
+</body>
+</html>
