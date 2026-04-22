@@ -1,12 +1,13 @@
 import instance from './index'
 
-// Article payloads
+export type ArticleStatus = 'draft' | 'published' | 'archived'
+
 export interface CreateArticlePayload {
   title: string
   content: string
   slug?: string
   excerpt?: string
-  status?: 'draft' | 'published' | 'archived'
+  status?: ArticleStatus
   categoryIds?: number[]
   tagIds?: number[]
   featuredImageURL?: string
@@ -16,30 +17,31 @@ export interface UpdateArticlePayload {
   title?: string
   content?: string
   excerpt?: string
-  status?: 'draft' | 'published' | 'archived'
+  status?: ArticleStatus
   categoryIds?: number[]
   tagIds?: number[]
+  featuredImageURL?: string
 }
 
 export interface ArticleListParams {
   page?: number
   pageSize?: number
   keyword?: string
-  status?: 'draft' | 'published' | 'archived'
-  // legacy single filters
+  status?: ArticleStatus
   category?: number
   tag?: number
-  // new multi-filters (CSV string like "1,2,3")
   categories?: string
   tags?: string
-  // match modes for multi-filters
   categoryMode?: 'any' | 'all'
   tagMode?: 'any' | 'all'
-  // projection and includes
   fields?: string
   include?: string
-  // sorting
   sort?: string
+}
+
+export interface ArticleDetailParams {
+  include?: string
+  fields?: string
 }
 
 export function createArticle(data: CreateArticlePayload) {
@@ -50,14 +52,15 @@ export function getArticles(params: ArticleListParams = {}) {
   return instance.get('/api/articles', { params })
 }
 
-// 获取文章总数（与列表同过滤条件）
-export function getArticlesCount(params: ArticleListParams = {}) {
+export function getArticlesCount(params: Omit<ArticleListParams, 'page' | 'pageSize' | 'fields' | 'include' | 'sort'> = {}) {
   return instance.get('/api/articles/count', { params })
 }
 
-export function getArticleById(id: number | string) {
-  return instance.get(`/api/articles/${id}`)
+export function getArticle(id: number | string, params: ArticleDetailParams = {}) {
+  return instance.get(`/api/articles/${id}`, { params })
 }
+
+export const getArticleById = getArticle
 
 export function updateArticle(id: number | string, data: UpdateArticlePayload) {
   return instance.put(`/api/articles/${id}`, data)
@@ -71,18 +74,7 @@ export function getArticleRevisions(id: number | string) {
   return instance.get(`/api/articles/${id}/revisions`)
 }
 
-/**
- * @deprecated 后端已在 GET 详情接口内自增 ViewCount，无需再调用。
- */
-export function incrementArticleViewCount(_id: number | string) {
-  if (import.meta.env?.DEV) {
-    // eslint-disable-next-line no-console
-    console.warn('[deprecated] incrementArticleViewCount() 已废弃：GET 详情会自动自增。')
-  }
-  return Promise.resolve({}) as unknown as Promise<any>
-}
-
-export function updateArticleStatus(id: number | string, status: 'draft' | 'published' | 'archived') {
+export function updateArticleStatus(id: number | string, status: ArticleStatus) {
   return instance.put(`/api/articles/${id}/status`, { status })
 }
 
@@ -98,15 +90,15 @@ export function setArticleFeaturedImage(id: number | string, featuredImageURL: s
   return instance.put(`/api/articles/${id}/featured-image`, { featuredImageURL })
 }
 
-export function getArticleBySlug(slug: string) {
-  return instance.get(`/api/articles/slug/${encodeURIComponent(slug)}`)
+export function getArticleBySlug(slug: string, params: ArticleDetailParams = {}) {
+  return instance.get(`/api/articles/slug/${encodeURIComponent(slug)}`, { params })
 }
 
 export function restoreArticleToRevision(id: number | string, revisionId: number | string) {
   return instance.post(`/api/articles/${id}/restore/${revisionId}`)
 }
 
-export function getMyArticles(params: { page?: number; pageSize?: number; status?: 'draft' | 'published' | 'archived' } = {}) {
+export function getMyArticles(params: { page?: number; pageSize?: number; status?: ArticleStatus } = {}) {
   return instance.get('/api/articles/my', { params })
 }
 
@@ -114,15 +106,57 @@ export function getDraftArticles(params: { page?: number; pageSize?: number } = 
   return instance.get('/api/articles/drafts', { params })
 }
 
-export function getPublishedArticles(params: { page?: number; pageSize?: number; keyword?: string; category?: number; tag?: number; categories?: string; tags?: string; categoryMode?: 'any' | 'all'; tagMode?: 'any' | 'all' } = {}) {
+export function getPublishedArticles(
+  params: {
+    page?: number
+    pageSize?: number
+    keyword?: string
+    category?: number
+    tag?: number
+    categories?: string
+    tags?: string
+    categoryMode?: 'any' | 'all'
+    tagMode?: 'any' | 'all'
+  } = {}
+) {
   return instance.get('/api/articles/published', { params })
 }
 
-export function importArticleDocument(file: File) {
+function normalizeImportPayload(input: FormData | File) {
+  if (input instanceof FormData) {
+    return input
+  }
+
   const formData = new FormData()
-  formData.append('file', file)
+  formData.append('file', input)
+  return formData
+}
+
+export function importArticle(input: FormData | File) {
+  const formData = normalizeImportPayload(input)
   return instance.post('/api/articles/import', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
 
+export const importArticleDocument = importArticle
+
+/**
+ * @deprecated The backend increments the view count when article detail is fetched.
+ */
+export function incrementArticleViewCount(_id: number | string) {
+  if (import.meta.env?.DEV) {
+    console.warn('[deprecated] incrementArticleViewCount() is no longer needed.')
+  }
+  return Promise.resolve({})
+}
+
+export const viewArticle = incrementArticleViewCount
+
+export function likeArticle(id: number | string) {
+  return instance.post(`/api/articles/${id}/like`)
+}
+
+export function favoriteArticle(id: number | string) {
+  return instance.post(`/api/articles/${id}/favorite`)
+}

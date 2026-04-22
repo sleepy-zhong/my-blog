@@ -1,34 +1,36 @@
 <template>
-  <div class="w-full min-h-screen p-0 m-0">
-    <div class="w-full flex items-center bg-white border-b px-6 py-4">
+  <div class="attachment-manage w-full min-h-screen p-0 m-0">
+    <div class="attachment-header w-full flex items-center bg-white border-b px-6 py-4">
       <h2 class="text-2xl font-bold text-blue-700 flex-1">附件管理</h2>
-      <button @click="showUploadModal = true" class="btn-primary">上传附件</button>
+      <button @click="showUploadModal = true" class="btn-primary toolbar-btn">上传附件</button>
     </div>
     
     <!-- 搜索和筛选 -->
-    <div class="w-full bg-white rounded-xl shadow p-6 border mt-6">
-      <div class="flex gap-4 mb-4">
-        <input v-model="keyword" placeholder="搜索文件名..." class="input flex-1" @input="onSearch" />
-        <select v-model="fileType" @change="onSearch" class="input w-32">
-          <option value="">全部类型</option>
-          <option value="image">图片</option>
-          <option value="document">文档</option>
-          <option value="video">视频</option>
-          <option value="audio">音频</option>
-        </select>
-        <select v-model="selectedUserId" @change="onSearch" class="input w-32">
-          <option value="">全部用户</option>
-          <option v-for="user in users" :key="user.UserID" :value="user.UserID">
-            {{ user.Username }}
-          </option>
-        </select>
-        <button @click="onSearch" class="btn">搜索</button>
-        <button @click="showBatchDeleteModal = true" class="btn-warning">批量删除</button>
+    <div class="attachment-toolbar-shell w-full bg-white rounded-xl shadow p-6 border mt-6">
+      <div class="attachment-toolbar flex gap-4 mb-4">
+        <input v-model="keyword" placeholder="搜索文件名..." class="input toolbar-field flex-1" @input="onSearch" />
+        <AppSelect
+          v-model="fileType"
+          class="input toolbar-field w-32"
+          :options="fileTypeOptions"
+          placeholder="全部类型"
+          @change="onSearch"
+        />
+        <AppSelect
+          v-model="selectedUserId"
+          class="input toolbar-field w-40"
+          :options="userOptions"
+          placeholder="全部用户"
+          searchable
+          @change="onSearch"
+        />
+        <button @click="onSearch" class="btn toolbar-btn">搜索</button>
+        <button @click="showBatchDeleteModal = true" class="btn-warning toolbar-btn">批量删除</button>
       </div>
     </div>
     
-    <div class="w-full bg-white rounded-xl shadow p-6 border mt-6 overflow-x-auto">
-      <table class="w-full text-center border-separate border-spacing-0">
+    <div class="attachment-table-wrap w-full bg-white rounded-xl shadow p-6 border mt-6 overflow-x-auto">
+      <table class="attachment-desktop-table w-full text-center border-separate border-spacing-0">
         <thead class="bg-blue-50">
           <tr>
             <th class="py-3 px-2 font-bold text-gray-700">
@@ -53,7 +55,7 @@
             <td class="py-2 px-2">{{ att.AttachmentID }}</td>
             <td class="py-2 px-2">
               <div class="flex justify-center">
-                <img v-if="isImage(att.MimeType)" :src="getFileUrl(att.StoredName)" 
+                <img v-if="isImage(att.MimeType)" :src="getFileUrl(att)" 
                      class="w-12 h-12 object-cover rounded cursor-pointer" 
                      @click="previewFile(att)" />
                 <div v-else class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center cursor-pointer" @click="previewFile(att)">
@@ -76,13 +78,64 @@
             <td class="py-2 px-2">{{ att.Article?.Title || att.PostID || '-' }}</td>
             <td class="py-2 px-2">{{ formatTime(att.UploadedAt || att.Timestamp || att.CreatedAt) }}</td>
             <td class="py-2 px-2 whitespace-nowrap">
-              <button @click="downloadFile(att)" class="btn mr-2">下载</button>
-              <button @click="compressFile(att)" v-if="isImage(att.MimeType)" class="btn-secondary mr-2">压缩</button>
-              <button @click="deleteAttachment(att)" class="btn-danger">删除</button>
+              <div class="attachment-action-row">
+                <button @click="downloadFile(att)" class="btn">下载</button>
+                <button @click="compressFile(att)" v-if="isImage(att.MimeType)" class="btn-secondary">压缩</button>
+                <button @click="deleteAttachment(att)" class="btn-danger">删除</button>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div class="attachment-mobile-list mobile-card-list">
+        <article v-for="att in attachments" :key="`mobile-${att.AttachmentID}`" class="mobile-card">
+          <div class="mobile-card-head">
+            <label class="mobile-check">
+              <input type="checkbox" v-model="selectedAttachments" :value="att.AttachmentID" />
+              <span>#{{ att.AttachmentID }}</span>
+            </label>
+            <span class="px-2 py-1 rounded text-xs" :class="getFileTypeClass(att.MimeType)">
+              {{ getFileTypeText(att.MimeType) }}
+            </span>
+          </div>
+
+          <div class="attachment-mobile-main">
+            <div class="attachment-mobile-preview" @click="previewFile(att)">
+              <img v-if="isImage(att.MimeType)" :src="getFileUrl(att)" class="attachment-mobile-image" />
+              <div v-else class="attachment-mobile-fallback">
+                <span>{{ getFileIcon(att.MimeType) }}</span>
+              </div>
+            </div>
+
+            <div class="attachment-mobile-copy">
+              <strong>{{ att.OriginalName }}</strong>
+              <span>{{ formatFileSize(att.FileSize) }}</span>
+            </div>
+          </div>
+
+          <div class="mobile-info-grid">
+            <div class="mobile-info-item">
+              <span>上传用户</span>
+              <strong>{{ att.User?.Username || att.UserID || '-' }}</strong>
+            </div>
+            <div class="mobile-info-item">
+              <span>关联文章</span>
+              <strong>{{ att.Article?.Title || att.PostID || '-' }}</strong>
+            </div>
+            <div class="mobile-info-item mobile-info-item-full">
+              <span>上传时间</span>
+              <strong>{{ formatTime(att.UploadedAt || att.Timestamp || att.CreatedAt) }}</strong>
+            </div>
+          </div>
+
+          <div class="attachment-action-row mobile-action-row">
+            <button @click="downloadFile(att)" class="btn">下载</button>
+            <button @click="compressFile(att)" v-if="isImage(att.MimeType)" class="btn-secondary">压缩</button>
+            <button @click="deleteAttachment(att)" class="btn-danger">删除</button>
+          </div>
+        </article>
+      </div>
       
       <!-- 空状态 -->
       <div v-if="attachments.length === 0 && !loading" class="text-center py-8 text-gray-500">
@@ -97,19 +150,22 @@
     </div>
     
     <!-- 分页 -->
-    <div class="flex justify-end items-center gap-2 mt-4">
+    <div class="attachment-footer flex justify-end items-center gap-2 mt-4">
       <button class="btn" :disabled="page===1" @click="page--; fetchAttachments()">上一页</button>
       <span>第 {{ page }} / {{ totalPages }} 页</span>
       <button class="btn" :disabled="page===totalPages" @click="page++; fetchAttachments()">下一页</button>
-      <select v-model="pageSize" @change="fetchAttachments" class="input w-20 ml-2">
-        <option v-for="s in [10,20,50,100]" :key="s" :value="s">{{ s }}/页</option>
-      </select>
+      <AppSelect
+        v-model="pageSize"
+        class="input attachment-page-size w-24 ml-2"
+        :options="pageSizeOptions"
+        @change="fetchAttachments"
+      />
     </div>
     
     <!-- 上传模态框 -->
-    <div v-if="showUploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div class="flex justify-between items-center mb-4">
+    <div v-if="showUploadModal" class="modal-backdrop fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="modal-panel modal-panel-sm bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="modal-header flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">上传附件</h3>
           <button @click="showUploadModal = false" class="text-gray-500 hover:text-gray-700">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,13 +193,13 @@
                 <input v-model="uploadForm.compress" type="checkbox" class="mr-2" />
                 启用压缩
               </label>
-              <div v-if="uploadForm.compress" class="grid grid-cols-2 gap-2">
+              <div v-if="uploadForm.compress" class="compress-grid grid grid-cols-2 gap-2">
                 <input v-model="uploadForm.quality" type="number" class="input" placeholder="质量(1-100)" min="1" max="100" />
                 <input v-model="uploadForm.maxWidth" type="number" class="input" placeholder="最大宽度" />
               </div>
             </div>
           </div>
-          <div class="flex justify-end gap-2">
+          <div class="modal-action-row flex justify-end gap-2">
             <button type="button" @click="showUploadModal = false" class="btn-secondary">取消</button>
             <button type="submit" :disabled="uploading" class="btn-primary">
               {{ uploading ? '上传中...' : '上传' }}
@@ -154,9 +210,9 @@
     </div>
     
     <!-- 文件预览模态框 -->
-    <div v-if="showPreviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
+    <div v-if="showPreviewModal" class="modal-backdrop fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="modal-panel modal-panel-lg bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div class="modal-header flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">文件预览</h3>
           <button @click="showPreviewModal = false" class="text-gray-500 hover:text-gray-700">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +221,7 @@
           </button>
         </div>
         <div v-if="selectedPreviewFile" class="text-center">
-          <img v-if="isImage(selectedPreviewFile.MimeType)" :src="getFileUrl(selectedPreviewFile.StoredName)" 
+          <img v-if="isImage(selectedPreviewFile.MimeType)" :src="getFileUrl(selectedPreviewFile)" 
                class="max-w-full max-h-96 object-contain" />
           <div v-else class="py-8">
             <p class="text-gray-500">此文件类型不支持预览</p>
@@ -176,9 +232,9 @@
     </div>
     
     <!-- 批量删除模态框 -->
-    <div v-if="showBatchDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-        <div class="flex justify-between items-center mb-4">
+    <div v-if="showBatchDeleteModal" class="modal-backdrop fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="modal-panel modal-panel-sm bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="modal-header flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">批量删除</h3>
           <button @click="showBatchDeleteModal = false" class="text-gray-500 hover:text-gray-700">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +244,7 @@
         </div>
         <div class="space-y-4">
           <p>确定要删除选中的 {{ selectedAttachments.length }} 个附件吗？</p>
-          <div class="flex justify-end gap-2">
+          <div class="modal-action-row flex justify-end gap-2">
             <button @click="showBatchDeleteModal = false" class="btn-secondary">取消</button>
             <button @click="batchDeleteAttachments" class="btn-danger">确认删除</button>
           </div>
@@ -200,6 +256,8 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import AppSelect from '@/components/AppSelect.vue'
+import { buildPreviewUrl } from '@/config/attachments'
 import { 
   getAttachments, 
   addAttachment, 
@@ -225,6 +283,24 @@ const selectedPreviewFile = ref(null)
 const selectedFiles = ref([])
 const selectedAttachments = ref([])
 const users = ref([])
+const fileTypeOptions = [
+  { label: '全部类型', value: '' },
+  { label: '图片', value: 'image' },
+  { label: '文档', value: 'document' },
+  { label: '视频', value: 'video' },
+  { label: '音频', value: 'audio' }
+]
+const pageSizeOptions = [10, 20, 50, 100].map((value) => ({
+  label: `${value}/页`,
+  value
+}))
+const userOptions = computed(() => [
+  { label: '全部用户', value: '' },
+  ...users.value.map((user) => ({
+    label: user.Username,
+    value: user.UserID
+  }))
+])
 
 const uploadForm = ref({
   postId: '',
@@ -300,12 +376,20 @@ function formatTime(timestamp) {
 }
 
 // 获取文件URL
-function getFileUrl(filePath) {
-  if (!filePath) return ''
-  if (filePath.startsWith('http')) return filePath
-  const base = import.meta?.env?.VITE_API_BASE_URL || ''
-  const normalized = filePath.startsWith('/') ? filePath : `/${filePath}`
-  return `${base}${normalized}`
+function getFileUrl(attachment) {
+  if (!attachment) return ''
+
+  const externalUrl = String(attachment.ExternalURL || '').trim()
+  if (attachment.IsExternal && externalUrl) {
+    return externalUrl
+  }
+
+  const attachmentId = Number(attachment.AttachmentID)
+  if (Number.isInteger(attachmentId) && attachmentId > 0) {
+    return buildPreviewUrl(attachmentId)
+  }
+
+  return ''
 }
 
 // 切换全选
@@ -395,37 +479,9 @@ async function fetchAttachments() {
         alert('服务器内部错误：' + (errorData?.message || errorData?.error || '未知错误') + '\n\n请检查后端日志获取详细信息。')
       }
     } else if (error.response?.status === 404) {
-      console.log('[AttachmentManage.vue] 附件API不存在，显示模拟数据')
-      // 显示模拟数据用于前端开发测试
-      attachments.value = [
-        {
-          AttachmentID: 1,
-          OriginalName: 'example.jpg',
-          StoredName: 'example_123456.jpg',
-          MimeType: 'image/jpeg',
-          FileSize: 1024000,
-          PostID: 1,
-          UserID: 1,
-          User: { Username: 'sleepyzhong' },
-          Article: { Title: '示例文章' },
-          Description: '示例图片',
-          UploadedAt: '2025-07-25T10:00:00.000Z'
-        },
-        {
-          AttachmentID: 2,
-          OriginalName: 'document.pdf',
-          StoredName: 'document_123456.pdf',
-          MimeType: 'application/pdf',
-          FileSize: 2048000,
-          PostID: null,
-          UserID: 1,
-          User: { Username: 'sleepyzhong' },
-          Article: null,
-          Description: '示例文档',
-          UploadedAt: '2025-07-25T09:30:00.000Z'
-        }
-      ]
-      total.value = 2
+      console.log('[AttachmentManage.vue] 附件API不存在，返回空列表')
+      attachments.value = []
+      total.value = 0
     } else {
       alert('获取附件列表失败：' + (error.message || '未知错误'))
     }
@@ -588,4 +644,234 @@ onMounted(fetchAttachments)
 .btn { @apply bg-blue-500 text-white rounded px-3 py-1 hover:bg-blue-600 transition font-bold shadow; }
 .btn-danger { @apply bg-red-500 text-white rounded px-3 py-1 hover:bg-red-600 transition font-bold shadow; }
 .input { @apply border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200 transition w-full; }
+
+.attachment-table-wrap table {
+  min-width: 1180px;
+}
+
+.attachment-action-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mobile-card-list {
+  display: none;
+}
+
+.mobile-card {
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.08);
+}
+
+.mobile-card-head,
+.mobile-check,
+.attachment-mobile-main,
+.mobile-action-row {
+  display: flex;
+}
+
+.mobile-card-head {
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mobile-check {
+  align-items: center;
+  gap: 0.5rem;
+  color: #475569;
+}
+
+.attachment-mobile-main {
+  gap: 0.875rem;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+.attachment-mobile-preview {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 1rem;
+  background: #eff6ff;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.attachment-mobile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachment-mobile-fallback {
+  font-size: 1.4rem;
+}
+
+.attachment-mobile-copy {
+  display: grid;
+  gap: 0.35rem;
+  text-align: left;
+}
+
+.attachment-mobile-copy span {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.mobile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.mobile-info-item {
+  padding: 0.875rem;
+  border-radius: 0.875rem;
+  background: #f8fafc;
+  text-align: left;
+}
+
+.mobile-info-item span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.mobile-info-item-full {
+  grid-column: 1 / -1;
+}
+
+.mobile-action-row {
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.modal-backdrop {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modal-panel {
+  width: min(100%, 960px);
+}
+
+@media (max-width: 900px) {
+  .attachment-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .toolbar-field {
+    flex: 1 1 240px;
+  }
+
+  .attachment-footer {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .attachment-header,
+  .attachment-toolbar,
+  .attachment-footer,
+  .modal-action-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .attachment-header {
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .attachment-toolbar-shell,
+  .attachment-table-wrap {
+    padding: 1rem;
+  }
+
+  .toolbar-field,
+  .toolbar-btn,
+  .attachment-page-size {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+  }
+
+  .attachment-footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal-panel {
+    border-radius: 1.25rem;
+    padding: 1rem;
+  }
+
+  .modal-header {
+    align-items: flex-start;
+  }
+
+  .modal-action-row > * {
+    width: 100%;
+  }
+
+  .compress-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .attachment-header,
+  .attachment-toolbar,
+  .attachment-footer {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    overflow-x: auto;
+    gap: 0.5rem;
+  }
+
+  .toolbar-field,
+  .toolbar-btn,
+  .attachment-page-size {
+    width: auto !important;
+    min-width: 132px;
+    max-width: none !important;
+    flex: 0 0 auto;
+    margin-left: 0 !important;
+  }
+
+  .attachment-table-wrap {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .attachment-desktop-table {
+    display: table !important;
+  }
+
+  .attachment-mobile-list {
+    display: none !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .mobile-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .attachment-mobile-main {
+    align-items: flex-start;
+  }
+
+  .mobile-action-row > * {
+    flex-basis: 100%;
+  }
+}
 </style> 

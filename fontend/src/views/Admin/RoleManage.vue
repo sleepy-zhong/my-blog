@@ -1,11 +1,22 @@
 <template>
-  <div class="w-full min-h-screen p-0 m-0">
-    <div class="w-full flex items-center bg-white border-b px-6 py-4">
+  <div class="role-manage w-full min-h-screen p-0 m-0">
+    <div class="role-page-header w-full flex items-center bg-white border-b px-6 py-4">
       <h2 class="text-2xl font-bold text-blue-700 flex-1">角色管理</h2>
       <button @click="onAdd" class="btn-primary">新建角色</button>
     </div>
-    <div class="w-full bg-white rounded-xl shadow p-6 border mt-6 overflow-x-auto">
-      <table class="w-full text-center border-separate border-spacing-0">
+    <div class="role-filter-bar w-full bg-white rounded-xl shadow p-4 border mt-4">
+      <input
+        v-model.trim="keyword"
+        type="text"
+        class="input role-filter-field"
+        placeholder="搜索角色名或描述"
+        @keyup.enter="applyFilters"
+      />
+      <button class="btn-secondary" @click="resetFilters">重置</button>
+      <button class="btn-primary" @click="applyFilters">筛选</button>
+    </div>
+    <div class="role-table-wrap w-full bg-white rounded-xl shadow p-6 border mt-6 overflow-x-auto">
+      <table class="role-desktop-table w-full text-center border-separate border-spacing-0">
         <thead class="bg-blue-50">
           <tr>
             <th class="py-3 px-2 font-bold text-gray-700">ID</th>
@@ -15,23 +26,50 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="role in roles" :key="role.RoleID" class="hover:bg-blue-50 even:bg-blue-50/40 transition">
+          <tr v-for="role in filteredRoles" :key="role.RoleID" class="hover:bg-blue-50 even:bg-blue-50/40 transition">
             <td class="py-2 px-2">{{ role.RoleID }}</td>
             <td class="py-2 px-2">{{ role.Name }}</td>
             <td class="py-2 px-2">{{ role.Description }}</td>
             <td class="py-2 px-2 whitespace-nowrap">
-              <button @click="onEdit(role)" class="btn mr-2">编辑</button>
-              <button @click="onDelete(role)" class="btn-danger">删除</button>
+              <div class="role-action-row">
+                <button @click="onEdit(role)" class="btn">编辑</button>
+                <button @click="onDelete(role)" class="btn-danger">删除</button>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div class="role-mobile-list mobile-card-list">
+        <article v-for="role in filteredRoles" :key="`mobile-${role.RoleID}`" class="mobile-card">
+          <div class="mobile-card-head">
+            <strong>#{{ role.RoleID }}</strong>
+            <span class="mobile-badge">角色</span>
+          </div>
+          <div class="mobile-info-grid">
+            <div class="mobile-info-item">
+              <span>角色名</span>
+              <strong>{{ role.Name }}</strong>
+            </div>
+            <div class="mobile-info-item mobile-info-item-full">
+              <span>描述</span>
+              <strong>{{ role.Description || '-' }}</strong>
+            </div>
+          </div>
+          <div class="role-action-row mobile-action-row">
+            <button @click="onEdit(role)" class="btn">编辑</button>
+            <button @click="onDelete(role)" class="btn-danger">删除</button>
+          </div>
+        </article>
+      </div>
     </div>
-    <Pagination :page="page" :totalPages="totalPages" @update:page="p => { page = p; fetchRoles(); }" />
+    <div class="role-pagination">
+      <Pagination :page="page" :totalPages="totalPages" @update:page="p => { page = p; fetchRoles(); }" />
+    </div>
 
     <!-- 新增/编辑角色弹窗 -->
-    <div v-if="showForm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-md relative">
+    <div v-if="showForm" class="role-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+      <div class="role-modal bg-white rounded-xl shadow-xl p-8 w-full max-w-md relative">
         <button class="absolute top-4 right-6 text-gray-400 hover:text-blue-500 text-2xl" @click="showForm = false">×</button>
         
         <div class="space-y-6">
@@ -61,7 +99,7 @@
               ></textarea>
             </div>
             
-            <div class="flex justify-end gap-3 pt-4 border-t">
+            <div class="role-form-footer flex justify-end gap-3 pt-4 border-t">
               <button type="button" @click="showForm = false" class="btn-secondary">取消</button>
               <button type="submit" class="btn-primary" :disabled="saving">
                 {{ saving ? '保存中...' : '保存' }}
@@ -74,7 +112,7 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { getRoles, addRole, updateRole, deleteRole } from '@/api/role'
 import Pagination from '@/components/Pagination.vue'
 
@@ -85,10 +123,20 @@ const keyword = ref('')
 const showForm = ref(false)
 const isEdit = ref(false)
 const saving = ref(false)
+const activeKeyword = ref('')
 const form = ref({
   RoleID: null,
   Name: '',
   Description: ''
+})
+
+const filteredRoles = computed(() => {
+  const query = activeKeyword.value.trim().toLowerCase()
+  if (!query) return roles.value
+  return roles.value.filter((role) => {
+    const haystack = `${role.Name || ''} ${role.Description || ''}`.toLowerCase()
+    return haystack.includes(query)
+  })
 })
 
 async function fetchRoles() {
@@ -103,6 +151,15 @@ async function fetchRoles() {
     console.error('获取角色列表失败:', error)
     roles.value = []
   }
+}
+
+function applyFilters() {
+  activeKeyword.value = keyword.value
+}
+
+function resetFilters() {
+  keyword.value = ''
+  activeKeyword.value = ''
 }
 
 function onAdd() {
@@ -203,5 +260,151 @@ onMounted(fetchRoles)
 .input:focus { box-shadow: 0 0 0 2px rgba(59,130,246,0.35); border-color: #bfdbfe; }
 th, td {
   text-align: center;
+}
+
+.role-table-wrap table {
+  min-width: 720px;
+}
+
+.role-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.role-filter-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mobile-card-list {
+  display: none;
+}
+
+.role-action-row,
+.role-pagination {
+  display: flex;
+}
+
+.role-action-row {
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.role-pagination {
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.role-modal-backdrop {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.mobile-card {
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.08);
+}
+
+.mobile-card-head,
+.mobile-action-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mobile-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.mobile-info-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.mobile-info-item {
+  padding: 0.875rem;
+  border-radius: 0.875rem;
+  background: #f8fafc;
+  text-align: left;
+}
+
+.mobile-info-item span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.mobile-action-row {
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .role-page-header,
+  .role-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .role-page-header {
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .role-table-wrap {
+    padding: 1rem;
+  }
+
+  .role-filter-bar {
+    flex-wrap: wrap;
+  }
+
+  .role-desktop-table {
+    display: none;
+  }
+
+  .role-mobile-list {
+    display: grid;
+    gap: 0.875rem;
+  }
+
+  .role-modal {
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+  }
+
+  .role-form-footer > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .role-filter-bar {
+    padding: 0.75rem !important;
+  }
+
+  .role-filter-field {
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 390px) {
+  .mobile-action-row > * {
+    flex: 1 1 100%;
+  }
 }
 </style> 

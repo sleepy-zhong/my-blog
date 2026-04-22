@@ -11,7 +11,7 @@
     </div>
 
     <!-- 回复列表 - 扁平化显示 -->
-    <div v-if="flattenedReplies.length > 0" class="ml-6 space-y-2">
+    <div v-if="flattenedReplies.length > 0" class="reply-list ml-6 space-y-2">
       <div v-for="reply in displayedReplies" :key="reply.CommentID" 
            class="bg-white rounded-lg shadow-sm border border-gray-100">
         <CommentNode 
@@ -24,7 +24,7 @@
       
       <!-- 查看更多回复 -->
       <div v-if="flattenedReplies.length > replyDisplayLimit && !showAllReplies" 
-           class="ml-6 py-2">
+           class="reply-toggle ml-6 py-2">
         <button 
           @click="showAllReplies = true"
           class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
@@ -35,7 +35,7 @@
       
       <!-- 收起回复 -->
       <div v-if="showAllReplies && flattenedReplies.length > replyDisplayLimit" 
-           class="ml-6 py-2">
+           class="reply-toggle ml-6 py-2">
         <button 
           @click="showAllReplies = false"
           class="text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors"
@@ -147,5 +147,12 @@ function handleDeleted(commentId) {
 <style scoped>
 .comment-thread {
   @apply mb-6;
+}
+
+@media (max-width: 640px) {
+  .reply-list,
+  .reply-toggle {
+    margin-left: 0.75rem;
+  }
 }
 </style>

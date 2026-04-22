@@ -1,9 +1,9 @@
 <template>
-  <div class="w-full min-h-screen p-0 m-0">
+  <div class="article-manage w-full min-h-screen p-0 m-0">
     <!-- 头部 -->
-    <div class="w-full flex items-center bg-white border-b px-6 py-4">
+    <div class="page-header w-full flex flex-col gap-3 sm:flex-row sm:items-center bg-white border-b px-6 py-4">
       <h2 class="text-2xl font-bold text-blue-700 flex-1">文章管理</h2>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button class="btn-primary" @click="onAdd">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -20,8 +20,8 @@
           <div class="text-base font-semibold text-gray-800">筛选</div>
         </div>
       </template>
-      <div class="flex gap-4 items-center mb-2 flex-wrap">
-        <div class="flex-1">
+      <div class="article-filter-bar flex gap-4 items-center mb-2 flex-wrap">
+        <div class="article-filter-search flex-1">
           <input 
             v-model="keyword" 
             @input="onSearch"
@@ -29,34 +29,55 @@
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <select v-model="statusFilter" @change="onSearch" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">全部状态</option>
-          <option value="draft">草稿</option>
-          <option value="published">已发布</option>
-          <option value="archived">已归档</option>
-        </select>
-        <select multiple v-model="selectedCategoryIds" @change="onSearch" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[12rem]">
-          <option disabled value="">选择分类（可多选）</option>
-          <option v-for="c in categoryOptions" :key="c.CategoryID" :value="c.CategoryID">{{ c.Name }}</option>
-        </select>
-        <select v-model="categoryMode" @change="onSearch" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="any">分类匹配：任一</option>
-          <option value="all">分类匹配：全部</option>
-        </select>
-        <select multiple v-model="selectedTagIds" @change="onSearch" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[12rem]">
-          <option disabled value="">选择标签（可多选）</option>
-          <option v-for="t in tagOptions" :key="t.TagID" :value="t.TagID">{{ t.Name }}</option>
-        </select>
-        <select v-model="tagMode" @change="onSearch" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="any">标签匹配：任一</option>
-          <option value="all">标签匹配：全部</option>
-        </select>
-        <select v-model="pageSize" @change="onPageSizeChange" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option :value="10">10/页</option>
-          <option :value="20">20/页</option>
-          <option :value="50">50/页</option>
-          <option :value="100">100/页</option>
-        </select>
+        <AppSelect
+          v-model="statusFilter"
+          class="w-40"
+          :options="statusOptions"
+          placeholder="全部状态"
+          @change="onSearch"
+        />
+        <AppSelect
+          v-model="selectedCategoryIds"
+          class="min-w-[12rem]"
+          :options="categoryOptions"
+          label-key="Name"
+          value-key="CategoryID"
+          placeholder="选择分类（可多选）"
+          multiple
+          searchable
+          @change="onSearch"
+        />
+        <AppSelect
+          v-model="categoryMode"
+          class="w-44"
+          :options="matchModeOptions"
+          placeholder="分类匹配方式"
+          @change="onSearch"
+        />
+        <AppSelect
+          v-model="selectedTagIds"
+          class="min-w-[12rem]"
+          :options="tagOptions"
+          label-key="Name"
+          value-key="TagID"
+          placeholder="选择标签（可多选）"
+          multiple
+          searchable
+          @change="onSearch"
+        />
+        <AppSelect
+          v-model="tagMode"
+          class="w-44"
+          :options="tagMatchModeOptions"
+          placeholder="标签匹配方式"
+          @change="onSearch"
+        />
+        <AppSelect
+          v-model="pageSize"
+          class="w-28"
+          :options="pageSizeOptions"
+          @change="onPageSizeChange"
+        />
         <button @click="fetchArticles" class="btn-secondary">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -75,71 +96,127 @@
       </template>
       <LoadingState v-if="loading" />
 
-      <table v-else class="w-full text-center border-separate border-spacing-0">
-        <thead class="bg-blue-50">
-          <tr>
-            <th class="py-3 px-2 font-bold text-gray-700">ID</th>
-            <th class="py-3 px-2 font-bold text-gray-700">标题</th>
-            <th class="py-3 px-2 font-bold text-gray-700">作者</th>
-            <th class="py-3 px-2 font-bold text-gray-700">状态</th>
-            <th class="py-3 px-2 font-bold text-gray-700">分类</th>
-            <th class="py-3 px-2 font-bold text-gray-700">标签</th>
-            <th class="py-3 px-2 font-bold text-gray-700">浏览量</th>
-            <th class="py-3 px-2 font-bold text-gray-700">创建时间</th>
-            <th class="py-3 px-2 font-bold text-gray-700">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="article in articles" :key="article.ArticleID || article.PostID" class="hover:bg-blue-50 even:bg-blue-50/40 transition">
-            <td class="py-2 px-2">{{ article.ArticleID || article.PostID }}</td>
-            <td class="py-2 px-2 text-left max-w-xs truncate" :title="article.Title">{{ article.Title }}</td>
-            <td class="py-2 px-2">{{ getAuthorName(article) }}</td>
-            <td class="py-2 px-2">
-              <span :class="getStatusClass(article.Status)">{{ getStatusText(article.Status) }}</span>
-            </td>
-            <td class="py-2 px-2">
-              <div class="flex flex-wrap gap-1 justify-center">
-                <span v-for="category in article.Categories" :key="category.CategoryID" 
-                      class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  {{ category.Name }}
-                </span>
-                <span v-if="!article.Categories?.length" class="text-gray-400 text-xs">-</span>
-              </div>
-            </td>
-            <td class="py-2 px-2">
-              <div class="flex flex-wrap gap-1 justify-center">
-                <span v-for="tag in article.Tags" :key="tag.TagID" 
-                      class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                  {{ tag.Name }}
-                </span>
-                <span v-if="!article.Tags?.length" class="text-gray-400 text-xs">-</span>
-              </div>
-            </td>
-            <td class="py-2 px-2">{{ article.ViewCount || 0 }}</td>
-            <td class="py-2 px-2 text-sm">{{ formatTime(article.CreatedAt) }}</td>
-            <td class="py-2 px-2 whitespace-nowrap">
-              <button @click="onEditInfo(article)" class="btn mr-2">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-                编辑信息
-              </button>
-              <button @click="onEditContent(article)" class="btn-secondary mr-2">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                编辑内容
-              </button>
-              <button @click="onDelete(article)" class="btn-danger">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-                {{ t('delete') }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else>
+      <div class="table-wrap article-table-wrap overflow-x-auto">
+        <table class="desktop-article-table w-full text-center border-separate border-spacing-0">
+          <thead class="bg-blue-50">
+            <tr>
+              <th class="py-3 px-2 font-bold text-gray-700">ID</th>
+              <th class="py-3 px-2 font-bold text-gray-700">标题</th>
+              <th class="py-3 px-2 font-bold text-gray-700">作者</th>
+              <th class="py-3 px-2 font-bold text-gray-700">状态</th>
+              <th class="py-3 px-2 font-bold text-gray-700">分类</th>
+              <th class="py-3 px-2 font-bold text-gray-700">标签</th>
+              <th class="py-3 px-2 font-bold text-gray-700">浏览量</th>
+              <th class="py-3 px-2 font-bold text-gray-700">创建时间</th>
+              <th class="py-3 px-2 font-bold text-gray-700">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="article in articles" :key="article.ArticleID || article.PostID" class="hover:bg-blue-50 even:bg-blue-50/40 transition">
+              <td class="py-2 px-2">{{ article.ArticleID || article.PostID }}</td>
+              <td class="py-2 px-2 text-left max-w-xs truncate" :title="article.Title">{{ article.Title }}</td>
+              <td class="py-2 px-2">{{ getAuthorName(article) }}</td>
+              <td class="py-2 px-2">
+                <span :class="getStatusClass(article.Status)">{{ getStatusText(article.Status) }}</span>
+              </td>
+              <td class="py-2 px-2">
+                <div class="flex flex-wrap gap-1 justify-center">
+                  <span v-for="category in article.Categories" :key="category.CategoryID" 
+                        class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                    {{ category.Name }}
+                  </span>
+                  <span v-if="!article.Categories?.length" class="text-gray-400 text-xs">-</span>
+                </div>
+              </td>
+              <td class="py-2 px-2">
+                <div class="flex flex-wrap gap-1 justify-center">
+                  <span v-for="tag in article.Tags" :key="tag.TagID" 
+                        class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                    {{ tag.Name }}
+                  </span>
+                  <span v-if="!article.Tags?.length" class="text-gray-400 text-xs">-</span>
+                </div>
+              </td>
+              <td class="py-2 px-2">{{ article.ViewCount || 0 }}</td>
+              <td class="py-2 px-2 text-sm">{{ formatTime(article.CreatedAt) }}</td>
+              <td class="py-2 px-2 whitespace-nowrap">
+                <div class="article-action-row">
+                  <button @click="onEditInfo(article)" class="btn">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    编辑信息
+                  </button>
+                  <button @click="onEditContent(article)" class="btn-secondary">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    编辑内容
+                  </button>
+                  <button @click="onDelete(article)" class="btn-danger">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    {{ t('delete') }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="article-mobile-list mobile-card-list">
+        <article v-for="article in articles" :key="`mobile-${article.ArticleID || article.PostID}`" class="article-mobile-card mobile-card">
+          <div class="mobile-card-head">
+            <strong>#{{ article.ArticleID || article.PostID }}</strong>
+            <span :class="getStatusClass(article.Status)">{{ getStatusText(article.Status) }}</span>
+          </div>
+          <h3 class="article-mobile-title">{{ article.Title }}</h3>
+          <div class="mobile-info-grid">
+            <div class="mobile-info-item">
+              <span>作者</span>
+              <strong>{{ getAuthorName(article) }}</strong>
+            </div>
+            <div class="mobile-info-item">
+              <span>浏览量</span>
+              <strong>{{ article.ViewCount || 0 }}</strong>
+            </div>
+            <div class="mobile-info-item mobile-info-item-full">
+              <span>创建时间</span>
+              <strong>{{ formatTime(article.CreatedAt) }}</strong>
+            </div>
+          </div>
+
+          <div class="mobile-section">
+            <span class="mobile-section-label">分类</span>
+            <div class="mobile-chip-row">
+              <span v-for="category in article.Categories" :key="`mobile-category-${article.ArticleID || article.PostID}-${category.CategoryID}`" class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                {{ category.Name }}
+              </span>
+              <span v-if="!article.Categories?.length" class="text-gray-400 text-xs">-</span>
+            </div>
+          </div>
+
+          <div class="mobile-section">
+            <span class="mobile-section-label">标签</span>
+            <div class="mobile-chip-row">
+              <span v-for="tag in article.Tags" :key="`mobile-tag-${article.ArticleID || article.PostID}-${tag.TagID}`" class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                {{ tag.Name }}
+              </span>
+              <span v-if="!article.Tags?.length" class="text-gray-400 text-xs">-</span>
+            </div>
+          </div>
+
+          <div class="article-action-row mobile-action-row">
+            <button @click="onEditInfo(article)" class="btn">编辑信息</button>
+            <button @click="onEditContent(article)" class="btn-secondary">编辑内容</button>
+            <button @click="onDelete(article)" class="btn-danger">{{ t('delete') }}</button>
+          </div>
+        </article>
+      </div>
+      </div>
       
       <!-- 空状态 -->
       <template #footer>
@@ -173,9 +250,9 @@
         <button @click="showEditInfoModal = false" class="absolute top-4 right-6 text-gray-400 hover:text-blue-500 text-2xl z-10">×</button>
         
         <div class="p-8">
-          <div class="flex items-center mb-8">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center mb-8">
             <div class="text-3xl font-bold text-gray-800 flex-1">编辑文章信息</div>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap gap-2">
               <button @click="showEditInfoModal = false" class="btn-secondary">取消</button>
               <button @click="onSaveInfo" class="btn-primary" :disabled="saving">
                 {{ saving ? '保存中...' : '保存' }}
@@ -196,39 +273,40 @@
 
             <div>
               <label class="block mb-2 text-lg font-semibold">文章状态</label>
-              <select v-model="editForm.status" class="input">
-                <option value="draft">草稿</option>
-                <option value="published">已发布</option>
-                <option value="archived">已归档</option>
-              </select>
+              <AppSelect v-model="editForm.status" class="input" :options="statusOptions" />
             </div>
 
             <div>
               <label class="block mb-2 text-lg font-semibold">分类</label>
-              <select v-model="editForm.categoryIds" multiple class="input">
-                <option v-for="category in categoryOptions" :key="category.CategoryID" :value="category.CategoryID">
-                  {{ category.Name }}
-                </option>
-              </select>
+              <AppSelect
+                v-model="editForm.categoryIds"
+                class="input"
+                :options="categoryOptions"
+                label-key="Name"
+                value-key="CategoryID"
+                placeholder="选择分类"
+                multiple
+                searchable
+              />
             </div>
 
             <div>
               <label class="block mb-2 text-lg font-semibold">标签</label>
-              <select v-model="editForm.tagIds" multiple class="input">
-                <option v-for="tag in tagOptions" :key="tag.TagID" :value="tag.TagID">
-                  {{ tag.Name }}
-                </option>
-              </select>
+              <AppSelect
+                v-model="editForm.tagIds"
+                class="input"
+                :options="tagOptions"
+                label-key="Name"
+                value-key="TagID"
+                placeholder="选择标签"
+                multiple
+                searchable
+              />
             </div>
 
             <div>
               <label class="block mb-2 text-lg font-semibold">可见范围</label>
-              <select v-model="editForm.visibility" class="input">
-                <option value="public">全部可见</option>
-                <option value="private">仅我可见</option>
-                <option value="fans">粉丝可见</option>
-                <option value="vip">VIP可见</option>
-              </select>
+              <AppSelect v-model="editForm.visibility" class="input" :options="visibilityOptions" />
             </div>
           </div>
 
@@ -247,6 +325,7 @@ import { getArticles, getArticle, createArticle, updateArticle, deleteArticle, i
 import { getTags } from '@/api/tag'
 import { getCategories } from '@/api/category'
 import { useMessageStore } from '@/store/user'
+import AppSelect from '@/components/AppSelect.vue'
 import Pagination from '@/components/Pagination.vue'
 import Card from '@/components/Card.vue'
 import LoadingState from '@/components/LoadingState.vue'
@@ -267,6 +346,32 @@ const selectedTagIds = ref([])
 const categoryMode = ref('any')
 const tagMode = ref('any')
 const loading = ref(false)
+const statusOptions = [
+  { label: '全部状态', value: '' },
+  { label: '草稿', value: 'draft' },
+  { label: '已发布', value: 'published' },
+  { label: '已归档', value: 'archived' }
+]
+const matchModeOptions = [
+  { label: '分类匹配：任一', value: 'any' },
+  { label: '分类匹配：全部', value: 'all' }
+]
+const tagMatchModeOptions = [
+  { label: '标签匹配：任一', value: 'any' },
+  { label: '标签匹配：全部', value: 'all' }
+]
+const pageSizeOptions = [
+  { label: '10/页', value: 10 },
+  { label: '20/页', value: 20 },
+  { label: '50/页', value: 50 },
+  { label: '100/页', value: 100 }
+]
+const visibilityOptions = [
+  { label: '全部可见', value: 'public' },
+  { label: '仅我可见', value: 'private' },
+  { label: '粉丝可见', value: 'fans' },
+  { label: 'VIP可见', value: 'vip' }
+]
 
 // 编辑文章信息相关状态
 const showEditInfoModal = ref(false)
@@ -591,7 +696,165 @@ onMounted(() => {
 .btn-danger:hover { background-color: #dc2626; }
 .input { width: 100%; padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; outline: none; }
 .input:focus { box-shadow: 0 0 0 2px rgba(59,130,246,0.5); border-color: #3b82f6; }
+.table-wrap table {
+  min-width: 1100px;
+}
 th, td {
   text-align: center;
+}
+
+.article-action-row,
+.mobile-card-head,
+.mobile-chip-row,
+.mobile-action-row {
+  display: flex;
+}
+
+.article-action-row,
+.mobile-chip-row,
+.mobile-action-row {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.article-action-row {
+  justify-content: center;
+}
+
+.mobile-card-list {
+  display: none;
+}
+
+.mobile-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.mobile-card-head {
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.article-mobile-title {
+  margin: 0.875rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.mobile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.mobile-info-item,
+.mobile-section {
+  padding: 0.875rem;
+  border-radius: 0.875rem;
+  background: #f8fafc;
+  text-align: left;
+}
+
+.mobile-info-item span,
+.mobile-section-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.mobile-info-item-full {
+  grid-column: 1 / -1;
+}
+
+.mobile-section {
+  margin-top: 0.875rem;
+}
+
+.mobile-action-row {
+  margin-top: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .article-filter-bar > * {
+    flex: 1 1 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header,
+  .article-filter-bar {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .article-manage .mx-6 {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  .mobile-card {
+    padding: 14px;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .article-manage .btn-primary,
+  .article-manage .btn-secondary {
+    width: 100%;
+  }
+
+  .article-filter-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    align-items: center;
+    padding-bottom: 0.25rem;
+  }
+
+  .article-filter-bar > * {
+    flex: 0 0 auto;
+    min-width: 150px;
+  }
+
+  .article-filter-search {
+    min-width: 220px;
+  }
+
+  .desktop-article-table {
+    display: table;
+  }
+
+  .article-table-wrap {
+    display: block;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .article-mobile-list {
+    display: none !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .page-header {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .article-manage .mx-6 {
+    margin-left: 0.75rem;
+    margin-right: 0.75rem;
+  }
+
+  .mobile-info-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style> 

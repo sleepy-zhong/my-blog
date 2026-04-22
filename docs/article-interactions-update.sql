@@ -1,0 +1,40 @@
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+USE `techblogdb`;
+
+CREATE TABLE IF NOT EXISTS `postlikes` (
+  `PostID` int NOT NULL COMMENT '文章 ID',
+  `UserID` int NOT NULL COMMENT '用户 ID',
+  `CreatedAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`PostID`, `UserID`) USING BTREE,
+  INDEX `FK_PostLikes_Users` (`UserID`) USING BTREE,
+  CONSTRAINT `FK_PostLikes_Posts`
+    FOREIGN KEY (`PostID`) REFERENCES `posts` (`PostID`)
+    ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `FK_PostLikes_Users`
+    FOREIGN KEY (`UserID`) REFERENCES `users` (`UserID`)
+    ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='文章点赞关系表';
+
+CREATE TABLE IF NOT EXISTS `postfavorites` (
+  `PostID` int NOT NULL COMMENT '文章 ID',
+  `UserID` int NOT NULL COMMENT '用户 ID',
+  `CreatedAt` timestamp NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`PostID`, `UserID`) USING BTREE,
+  INDEX `FK_PostFavorites_Users` (`UserID`) USING BTREE,
+  CONSTRAINT `FK_PostFavorites_Posts`
+    FOREIGN KEY (`PostID`) REFERENCES `posts` (`PostID`)
+    ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `FK_PostFavorites_Users`
+    FOREIGN KEY (`UserID`) REFERENCES `users` (`UserID`)
+    ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='文章收藏关系表';
+
+SET FOREIGN_KEY_CHECKS = 1;

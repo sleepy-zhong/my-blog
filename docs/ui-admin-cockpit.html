@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Cockpit</title>
+  <style>
+    :root {
+      --bg: #08111f;
+      --bg-soft: #0d1727;
+      --panel: rgba(13, 23, 39, 0.88);
+      --panel-soft: rgba(16, 28, 48, 0.76);
+      --line: rgba(116, 151, 255, 0.12);
+      --text: #edf3ff;
+      --muted: #8ea1c1;
+      --primary: #6c86ff;
+      --cyan: #54d6d8;
+      --pink: #ff7ca8;
+      --amber: #ffc05c;
+      --green: #56d69b;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(108, 134, 255, 0.22), transparent 22%),
+        radial-gradient(circle at right top, rgba(84, 214, 216, 0.18), transparent 20%),
+        linear-gradient(180deg, #07101d 0%, #0a1321 52%, #09111b 100%);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      padding: 26px 18px;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(7, 14, 24, 0.92);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      box-shadow: 0 14px 30px rgba(108, 134, 255, 0.28);
+    }
+
+    .menu,
+    .quick-actions,
+    .stat-grid,
+    .lower-grid,
+    .queue,
+    .zones,
+    .logs {
+      display: grid;
+      gap: 14px;
+    }
+
+    .menu a,
+    .quick-actions div {
+      padding: 14px 16px;
+      border-radius: 18px;
+      color: var(--muted);
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid transparent;
+      font-weight: 700;
+    }
+
+    .menu a.active,
+    .quick-actions div {
+      color: var(--text);
+      border-color: var(--line);
+      background: rgba(108, 134, 255, 0.08);
+    }
+
+    .main {
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding: 18px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 24px;
+      background: rgba(14, 23, 38, 0.78);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar h1 {
+      margin: 0 0 6px;
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -0.05em;
+    }
+
+    .topbar p,
+    .card p,
+    .queue-item p,
+    .zone p,
+    .log p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .card,
+    .queue-item,
+    .zone,
+    .log {
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .card {
+      padding: 22px;
+    }
+
+    .stat-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-bottom: 18px;
+    }
+
+    .card .label {
+      display: inline-flex;
+      margin-bottom: 12px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(108, 134, 255, 0.12);
+      color: #b9c7ff;
+    }
+
+    .card strong {
+      display: block;
+      font-size: 30px;
+      margin-bottom: 10px;
+      letter-spacing: -0.05em;
+    }
+
+    .lower-grid {
+      grid-template-columns: 1.1fr 0.9fr;
+      margin-bottom: 18px;
+    }
+
+    .panel-box {
+      padding: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 24px;
+      background: var(--panel-soft);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+
+    .queue-item,
+    .zone,
+    .log {
+      padding: 18px;
+    }
+
+    .tag {
+      display: inline-flex;
+      margin-bottom: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .tag.warn {
+      background: rgba(255, 192, 92, 0.16);
+      color: #ffc96f;
+    }
+
+    .tag.ok {
+      background: rgba(86, 214, 155, 0.14);
+      color: #8de6b8;
+    }
+
+    .tag.info {
+      background: rgba(84, 214, 216, 0.14);
+      color: #7fe9eb;
+    }
+
+    .zones {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .zone strong,
+    .queue-item strong,
+    .log strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    @media (max-width: 1180px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    @media (max-width: 960px) {
+      .stat-grid,
+      .lower-grid,
+      .zones {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">M</div>
+        <div>
+          <div>Admin Cockpit</div>
+          <small style="color:#8ea1c1;">My Blog Console</small>
+        </div>
+      </div>
+
+      <nav class="menu">
+        <a class="active" href="#">总览</a>
+        <a href="#">文章管理</a>
+        <a href="#">分类标签</a>
+        <a href="#">评论审核</a>
+        <a href="#">用户与角色</a>
+        <a href="#">系统日志</a>
+      </nav>
+
+      <div style="margin:26px 0 14px;color:#8ea1c1;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;">快捷入口</div>
+      <div class="quick-actions">
+        <div>新建文章</div>
+        <div>导出日志</div>
+        <div>检查游客接口</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1>站点控制台</h1>
+          <p>这个版本把你的后台首页改成更像“运行中控”的结构，强调站点状态、待处理任务和关键操作入口。</p>
+        </div>
+        <div class="status-bar">
+          <div class="status-pill">服务状态: Normal</div>
+          <div class="status-pill">数据库: localhost:3307</div>
+          <div class="status-pill">今日访问: 1,284</div>
+        </div>
+      </header>
+
+      <section class="stat-grid">
+        <article class="card">
+          <span class="label">Articles</span>
+          <strong>184</strong>
+          <p>已发布文章数量，适合接入你的文章管理统计。</p>
+        </article>
+        <article class="card">
+          <span class="label">Comments</span>
+          <strong>32</strong>
+          <p>待审核评论，适合直接做成待办入口。</p>
+        </article>
+        <article class="card">
+          <span class="label">Visitors</span>
+          <strong>24.8K</strong>
+          <p>本月访客量与内容表现趋势。</p>
+        </article>
+        <article class="card">
+          <span class="label">Errors</span>
+          <strong>03</strong>
+          <p>需要优先查看的鉴权或接口异常。</p>
+        </article>
+      </section>
+
+      <section class="lower-grid">
+        <div class="panel-box">
+          <div class="panel-head">
+            <h2>审核队列</h2>
+            <span style="color:#8ea1c1;">Priority Workflow</span>
+          </div>
+          <div class="queue">
+            <div class="queue-item">
+              <span class="tag warn">needs review</span>
+              <strong>游客读取文章接口返回 401</strong>
+              <p>检查前端代理路径、axios 拦截器和后端匿名白名单是否一致。</p>
+            </div>
+            <div class="queue-item">
+              <span class="tag info">content update</span>
+              <strong>数据库初始化文档待补充</strong>
+              <p>需要整理 `01-init.sql` 与 `init.sql` 的职责差异，避免导入失败。</p>
+            </div>
+            <div class="queue-item">
+              <span class="tag ok">ready</span>
+              <strong>首页视觉升级方案待选型</strong>
+              <p>前台首页可切换为更强专题感的 Aurora 方案。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-box">
+          <div class="panel-head">
+            <h2>角色热区</h2>
+            <span style="color:#8ea1c1;">Activity Zones</span>
+          </div>
+          <div class="zones">
+            <div class="zone">
+              <span class="tag ok">editor</span>
+              <strong>内容发布</strong>
+              <p>集中处理草稿、标签和封面资源。</p>
+            </div>
+            <div class="zone">
+              <span class="tag info">admin</span>
+              <strong>系统配置</strong>
+              <p>快速跳转数据库、代理、权限与日志配置。</p>
+            </div>
+            <div class="zone">
+              <span class="tag warn">moderation</span>
+              <strong>评论审核</strong>
+              <p>管理敏感评论、垃圾信息和访客留言。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel-box">
+        <div class="panel-head">
+          <h2>系统日志</h2>
+          <span style="color:#8ea1c1;">Recent Events</span>
+        </div>
+        <div class="logs">
+          <div class="log">
+            <strong>11:24 - 文章列表请求被前端拦截器重定向</strong>
+            <p>游客请求 `/api/articles` 时被误判为未登录异常，建议拆分公开接口与私有接口的拦截策略。</p>
+          </div>
+          <div class="log">
+            <strong>10:57 - 本地数据库连接成功</strong>
+            <p>应用已连接 `localhost:3307`，账号 `root`，继续核对初始化表结构是否完整。</p>
+          </div>
+          <div class="log">
+            <strong>09:42 - 后台编辑器草稿自动保存</strong>
+            <p>文章《为什么游客可见文章接口仍然可能返回 401》已保存到草稿箱。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -21,14 +21,59 @@
     </nav> -->
 
     <div class="w-full px-0 py-6">
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:items-start">
         
         <!-- 左侧分类导航和目录 -->
-        <div class="lg:col-span-1">
-          <div class="space-y-6">
-            <!-- 文章分类卡片 -->
-            <div class="glass-card rounded-xl p-6 sticky top-6">
-              <h3 class="text-lg font-semibold mb-4 text-gray-800">文章分类</h3>
+        <div class="self-start lg:col-span-1">
+          <div class="sidebar-stack sticky space-y-6" :style="sidebarStickyStyle">
+            <!-- Table of contents -->
+            <div v-if="headings.length > 0" class="toc-card toc-shell rounded-xl p-6">
+              <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                </svg>
+                &#25991;&#31456;&#30446;&#24405;
+              </h3>
+              <nav class="space-y-1">
+                <a 
+                  v-for="heading in headings" 
+                  :key="heading.id"
+                  :href="`#${heading.id}`"
+                  :class="[
+                    'toc-item',
+                    activeHeadingId === heading.id ? 'active' : '',
+                    `level-${heading.level}`
+                  ]"
+                  @click.prevent="scrollToHeading(heading.id)"
+                  :title="heading.text"
+                >
+                  {{ heading.text }}
+                </a>
+              </nav>
+              
+              <!-- Reading progress -->
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="flex items-center text-xs text-gray-500 mb-2">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                  &#38405;&#35835;&#36827;&#24230;
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                    :style="{ width: Math.min(scrollProgress, 100) + '%' }"
+                  ></div>
+                </div>
+                <div class="text-xs text-gray-500 mt-1 text-center">
+                  {{ Math.round(scrollProgress) }}%
+                </div>
+              </div>
+            </div>
+
+            <!-- Category list -->
+            <div class="glass-card category-panel rounded-xl p-6">
+              <h3 class="text-lg font-semibold mb-4 text-gray-800">&#25991;&#31456;&#20998;&#31867;</h3>
               <div class="category-tree space-y-2">
                 <div 
                   v-for="category in categories" 
@@ -53,66 +98,11 @@
                 </div>
               </div>
             </div>
-            
-            <!-- 文章目录卡片 -->
-            <div 
-              v-if="headings.length > 0" 
-              class="toc-card rounded-xl p-6 sticky"
-              :class="{ 'mt-6': categories.length > 0 }"
-              :style="{ 
-                top: tocTopOffset + 'px',
-                maxHeight: 'calc(100vh - ' + (tocTopOffset + 40) + 'px)',
-                overflowY: 'auto'
-              }"
-            >
-              <h3 class="text-lg font-semibold mb-4 text-gray-800 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                </svg>
-                文章目录
-              </h3>
-              <nav class="space-y-1 max-h-96 overflow-y-auto">
-                <a 
-                  v-for="heading in headings" 
-                  :key="heading.id"
-                  :href="`#${heading.id}`"
-                  :class="[
-                    'toc-item',
-                    activeHeadingId === heading.id ? 'active' : '',
-                    `level-${heading.level}`
-                  ]"
-                  @click.prevent="scrollToHeading(heading.id)"
-                  :title="heading.text"
-                >
-                  {{ heading.text }}
-                </a>
-              </nav>
-              
-              <!-- 进度条 -->
-              <div class="mt-4 pt-4 border-t border-gray-200">
-                <div class="flex items-center text-xs text-gray-500 mb-2">
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                  </svg>
-                  阅读进度
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                    :style="{ width: Math.min(scrollProgress, 100) + '%' }"
-                  ></div>
-                </div>
-                <div class="text-xs text-gray-500 mt-1 text-center">
-                  {{ Math.round(scrollProgress) }}%
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
-        <!-- 中间文章内容 -->
         <div class="lg:col-span-3">
-          <article class="glass-card rounded-xl overflow-hidden">
+          <article class="glass-card article-shell rounded-xl overflow-hidden">
             <!-- 文章头部 -->
             <div class="p-8 border-b border-gray-100">
               <!-- 面包屑导航 -->
@@ -143,15 +133,15 @@
               </div>
               
               <!-- 文章信息 -->
-              <div class="flex items-center text-gray-600 text-sm">
+              <div class="article-author-row flex flex-col gap-4 text-gray-600 text-sm sm:flex-row sm:items-center">
                 <img 
                   :src="authorAvatarSrc" 
                   class="w-10 h-10 rounded-full mr-3 object-cover" 
                   @error="onAuthorAvatarError"
                 >
-                <div>
+                <div class="min-w-0">
                   <div class="font-medium text-gray-900">{{ article?.user?.DisplayName || article?.User?.DisplayName || article?.Author?.DisplayName || '佚名' }}</div>
-                  <div class="flex items-center space-x-4">
+                  <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
                     <span>发布于 {{ formatDate(article?.PublishedAt || article?.CreatedAt) }}</span>
                     <span>•</span>
                     <span>阅读量 {{ article?.ViewCount || 0 }}</span>
@@ -171,8 +161,8 @@
             
             <!-- 文章底部操作 -->
             <div class="px-8 py-6 border-t border-gray-100 bg-gray-50">
-              <div class="flex items-center justify-between">
-                <div class="flex space-x-4">
+              <div class="article-footer-bar flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="article-action-group flex flex-wrap gap-4">
                   <button 
                     @click="onToggleLike" 
                     class="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors"
@@ -186,7 +176,7 @@
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>
                     </svg>
-                    <span>评论 ({{ comments.length }})</span>
+                    <span>评论 ({{ totalCommentCount }})</span>
                   </button>
                   <button @click="onToggleFavorite" class="flex items-center space-x-2 text-gray-600 hover:text-green-500 transition-colors">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -203,7 +193,7 @@
           </article>
 
           <!-- 评论区 -->
-          <div class="glass-card rounded-xl mt-8 p-8">
+          <div class="glass-card comment-shell rounded-xl mt-8 p-8">
             <!-- 评论输入框 -->
             <div class="mb-6">
               <textarea
@@ -260,32 +250,35 @@
         </div>
 
         <!-- 右侧相关推荐 -->
-        <div class="lg:col-span-1">
-          <div class="space-y-6">
-            <!-- 相关文章 -->
-            <div class="glass-card rounded-xl p-6 sticky top-6">
-              <h3 class="text-lg font-semibold mb-4 text-gray-800">相关文章</h3>
+        <div class="self-start lg:col-span-1">
+          <div class="sidebar-stack sticky space-y-6" :style="sidebarStickyStyle">
+            <!-- Related articles -->
+            <div class="glass-card related-panel rounded-xl p-6">
+              <h3 class="text-lg font-semibold mb-4 text-gray-800">&#30456;&#20851;&#25991;&#31456;</h3>
               <div class="space-y-4">
                 <div 
                   v-for="relatedArticle in relatedArticles" 
                   :key="relatedArticle.PostID"
-                  class="article-card p-4 bg-white rounded-lg border border-gray-100 cursor-pointer"
+                  class="article-card related-card p-4 bg-white rounded-lg border border-gray-100 cursor-pointer"
                   @click="goToArticle(relatedArticle.PostID)"
                 >
                   <h4 class="font-medium text-gray-900 text-sm mb-2 line-clamp-2">{{ relatedArticle.Title }}</h4>
                   <div class="flex items-center text-xs text-gray-500">
                     <span>{{ formatDate(relatedArticle.PublishedAt || relatedArticle.CreatedAt, 'relative') }}</span>
-                    <span class="mx-2">•</span>
-                    <span>阅读 {{ relatedArticle.ViewCount || 0 }}</span>
+                    <span class="mx-2">&bull;</span>
+                    <span>&#38405;&#35835; {{ relatedArticle.ViewCount || 0 }}</span>
                   </div>
                 </div>
+                <div v-if="relatedArticles.length === 0" class="text-sm text-gray-500">
+                  &#26242;&#26080;&#30456;&#20851;&#25991;&#31456;
+                </div>
               </div>
-              <button @click="goToMoreRelated" class="w-full mt-4 py-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium">查看更多</button>
+              <button v-if="relatedArticles.length > 0" @click="goToMoreRelated" class="w-full mt-4 py-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium">&#26597;&#30475;&#26356;&#22810;</button>
             </div>
             
-            <!-- 热门标签 -->
-            <div class="glass-card rounded-xl p-6">
-              <h3 class="text-lg font-semibold mb-4 text-gray-800">热门标签</h3>
+            <!-- Popular tags -->
+            <div class="glass-card tag-panel rounded-xl p-6">
+              <h3 class="text-lg font-semibold mb-4 text-gray-800">&#28909;&#38376;&#26631;&#31614;</h3>
               <div class="flex flex-wrap gap-2">
                 <span 
                   v-for="tag in popularTags" 
@@ -302,7 +295,6 @@
       </div>
     </div>
 
-    <!-- 回复弹窗 -->
     <div v-if="showReplyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div class="bg-white rounded-lg shadow-lg p-6 w-96 max-w-[90vw]">
         <div class="flex items-center justify-between mb-4">
@@ -348,6 +340,7 @@ import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css' // 添加代码高亮样式
 import { withRetry } from '@/utils/retry'
+import { sanitizeHtml } from '@/utils/htmlSanitizer'
 
 const md = new MarkdownIt({
   html: true,
@@ -393,6 +386,11 @@ md.renderer.rules.image = function (tokens, idx, options, env, self) {
   return defaultImageRule(tokens, idx, options, env, self)
 }
 
+function renderMarkdownToSafeHtml(markdownSource) {
+  if (!markdownSource) return ''
+  return sanitizeHtml(md.render(markdownSource))
+}
+
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
@@ -403,7 +401,7 @@ const article = ref(null)
 const headings = ref([])
 const activeHeadingId = ref('')
 const scrollProgress = ref(0)
-const tocTopOffset = ref(24) // 目录距离顶部的偏移量
+const sidebarTopOffset = ref(96)
 
 // 分类和标签数据
 const categories = ref([])
@@ -433,10 +431,36 @@ const estimatedReadTime = computed(() => {
   const words = article.value.Content.length / 2 // 中文字符估算
   return Math.ceil(words / wordsPerMinute)
 })
+
+const totalCommentCount = computed(() => countCommentNodes(comments.value))
+const sidebarStickyStyle = computed(() => ({
+  top: `${sidebarTopOffset.value}px`,
+  maxHeight: `calc(100vh - ${sidebarTopOffset.value + 24}px)`,
+  overflowY: 'auto'
+}))
+
 function parseApiPayload(res) {
   // axios 拦截器已经解包了 res.data，所以这里直接返回 res
   // 如果有嵌套的 data 结构，再解包一层
   return res?.data || res
+}
+
+function countCommentNodes(commentList = []) {
+  return commentList.reduce((total, comment) => {
+    return total + 1 + countCommentNodes(comment.children || [])
+  }, 0)
+}
+
+function normalizeCommentTreeResponse(response) {
+  if (Array.isArray(response)) {
+    return { list: response, pagination: null }
+  }
+
+  const payload = parseApiPayload(response)
+  const list = Array.isArray(payload) ? payload : (payload?.items || payload?.list || [])
+  const pagination = response?.pagination || payload?.pagination || null
+
+  return { list, pagination }
 }
 
 
@@ -458,13 +482,13 @@ function normalizeMarkdown(content) {
 const parsedContent = computed(() => {
   const mdSource = getArticleMarkdown()
   if (!mdSource) return ''
-  return md.render(mdSource)
+  return renderMarkdownToSafeHtml(mdSource)
 })
 
 // 提取文章中的标题生成目录
 const extractHeadings = (content) => {
   const tempDiv = document.createElement('div')
-  tempDiv.innerHTML = md.render(content)
+  tempDiv.innerHTML = renderMarkdownToSafeHtml(content)
   const headingElements = tempDiv.querySelectorAll('h1, h2, h3')
   return Array.from(headingElements).map((el, index) => ({
     id: `heading-${index}`,
@@ -527,30 +551,31 @@ const goToMoreRelated = () => {
   router.push({ path: '/posts', query })
 }
 
+const updateSidebarTopOffset = () => {
+  const navEl = document.querySelector('.nav-outer')
+  const navHeight = navEl instanceof HTMLElement ? navEl.getBoundingClientRect().height : 72
+  const gap = window.innerWidth >= 1024 ? 24 : 16
+  sidebarTopOffset.value = Math.max(Math.ceil(navHeight + gap), 88)
+}
+
 // 滚动进度监听
 const updateScrollProgress = () => {
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop
   const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
   const progress = (scrollTop / scrollHeight) * 100
   scrollProgress.value = Math.min(Math.max(progress, 0), 100)
-  
-  // 动态调整目录位置 - 当滚动到一定距离时调整offset
-  if (scrollTop > 100) {
-    tocTopOffset.value = 24 // 当页面滚动后，保持较小的偏移
-  } else {
-    tocTopOffset.value = 24 // 页面顶部时也保持一致的偏移
-  }
 }
 
-// 滚动到指定标题
+// Scroll to heading
 const scrollToHeading = (id) => {
   const element = document.getElementById(id)
   if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const targetTop = element.getBoundingClientRect().top + window.pageYOffset - sidebarTopOffset.value - 12
+    window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' })
   }
 }
 
-// 观察当前标题，高亮目录项
+// Observe the active heading
 let headingObserver
 function initHeadingObserver() {
   if (headingObserver) headingObserver.disconnect()
@@ -609,16 +634,8 @@ const loadCategories = async () => {
     
     categories.value = categoriesWithCount
   } catch (error) {
-    console.error('获取分类失败:', error)
-    // 使用模拟数据
-    categories.value = [
-      { CategoryID: 1, Name: 'springboot', PostCount: 12 },
-      { CategoryID: 2, Name: '前端', PostCount: 8 },
-      { CategoryID: 3, Name: '后端', PostCount: 5 },
-      { CategoryID: 4, Name: '数据库', PostCount: 3 },
-      { CategoryID: 5, Name: '测试', PostCount: 15 },
-      { CategoryID: 6, Name: 'React', PostCount: 7 }
-    ]
+    console.error('Failed to load categories:', error)
+    categories.value = []
   }
 }
 
@@ -631,15 +648,7 @@ const loadPopularTags = async () => {
     popularTags.value = allTags.slice(0, 10) // 取前10个热门标签
   } catch (error) {
     console.error('获取标签失败:', error)
-    // 使用模拟数据
-    popularTags.value = [
-      { TagID: 1, Name: 'Vue.js' },
-      { TagID: 2, Name: 'React' },
-      { TagID: 3, Name: 'TypeScript' },
-      { TagID: 4, Name: 'JavaScript' },
-      { TagID: 5, Name: 'CSS' },
-      { TagID: 6, Name: 'Node.js' }
-    ]
+    popularTags.value = []
   }
 }
 
@@ -672,43 +681,23 @@ const loadRelatedArticles = async () => {
       .slice(0, 3)
   } catch (error) {
     console.error('获取相关文章失败:', error)
-    // 使用模拟数据
-    relatedArticles.value = [
-      {
-        PostID: 2,
-        Title: 'Vue 3 性能优化指南：从入门到精通',
-        ViewCount: 856,
-        CreatedAt: new Date(Date.now() - 86400000).toISOString()
-      },
-      {
-        PostID: 3,
-        Title: '深入理解 Vue 3 响应式原理',
-        ViewCount: 1245,
-        CreatedAt: new Date(Date.now() - 259200000).toISOString()
-      },
-      {
-        PostID: 4,
-        Title: 'Vue 3 + TypeScript 项目实战',
-        ViewCount: 987,
-        CreatedAt: new Date(Date.now() - 604800000).toISOString()
-      }
-    ]
+    relatedArticles.value = []
   }
 }
 
 async function guardLoginAndGoLoginIfNeeded() {
-  if (!userStore.token) {
+  if (!userStore.user) {
+    try {
+      await userStore.initSession()
+    } catch (_error) {
+      // fall through to login redirect
+    }
+  }
+
+  if (!userStore.user) {
     messageStore.show('请先登录', 'info')
     router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
     return false
-  }
-  if (!userStore.user) {
-    try { await userStore.fetchUser() } catch {}
-    if (!userStore.user) {
-      messageStore.show('请先登录', 'info')
-      router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
-      return false
-    }
   }
   return true
 }
@@ -816,23 +805,26 @@ async function loadArticleCore(id) {
 }
 
 onMounted(async () => {
-  // 添加滚动监听
-  window.addEventListener('scroll', handleScroll)
+  updateSidebarTopOffset()
 
-  // 并行加载分类/标签
+  // Sync sticky offsets and scroll listeners
+  window.addEventListener('scroll', handleScroll)
+  window.addEventListener('resize', updateSidebarTopOffset)
+  updateScrollProgress()
+
+  // Load sidebar data
   const loadTasks = [loadCategories(), loadPopularTags()]
 
-  // 加载文章与相关文章/目录
+  // Load article content and TOC
   await loadArticleCore(route.params.id)
 
-  // 等待其他任务
+  // Wait for sidebar requests
   await Promise.allSettled(loadTasks)
 
-  // 获取评论树
+  // Load comments
   loadComments()
 })
 
-// 监听路由参数变化，支持在详情页内跳转到另一篇文章
 watch(() => route.params.id, async (newId, oldId) => {
   if (newId === oldId) return
   // 回到页面顶部
@@ -844,8 +836,9 @@ watch(() => route.params.id, async (newId, oldId) => {
 })
 
 onUnmounted(() => {
-  // 清理监听器
+  // Remove page listeners
   window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener('resize', updateSidebarTopOffset)
   if (headingObserver) {
     headingObserver.disconnect()
   }
@@ -864,112 +857,30 @@ async function loadComments(reset = false) {
   
   isLoadingComments.value = true
   try {
-    // 模拟API调用 - 当后端不可用时使用
-    const mockComments = [
-      {
-        CommentID: 1,
-        Content: "这是一条主评论，我觉得这篇文章写得很好！",
-        User: {
-          UserID: 1,
-          Username: "user1",
-          DisplayName: "张三",
-          AvatarURL: ""
-        },
-        CreatedAt: "2025-01-27T10:00:00.000Z",
-        children: [
-          {
-            CommentID: 2,
-            Content: "我也觉得不错，特别是第二段的分析很到位。",
-            User: {
-              UserID: 2,
-              Username: "user2",
-              DisplayName: "李四",
-              AvatarURL: ""
-            },
-            CreatedAt: "2025-01-27T10:15:00.000Z",
-            children: [
-              {
-                CommentID: 3,
-                Content: "确实，作者的见解很独特。",
-                User: {
-                  UserID: 3,
-                  Username: "user3",
-                  DisplayName: "王五",
-                  AvatarURL: ""
-                },
-                CreatedAt: "2025-01-27T10:30:00.000Z",
-                children: []
-              }
-            ]
-          },
-          {
-            CommentID: 4,
-            Content: "同意楼上，这个观点我之前没想到过。",
-            User: {
-              UserID: 4,
-              Username: "user4",
-              DisplayName: "赵六",
-              AvatarURL: ""
-            },
-            CreatedAt: "2025-01-27T10:45:00.000Z",
-            children: []
-          }
-        ]
-      },
-      {
-        CommentID: 5,
-        Content: "另一个角度来看，我觉得还可以加入更多的实例来论证观点。",
-        User: {
-          UserID: 5,
-          Username: "user5",
-          DisplayName: "钱七",
-          AvatarURL: ""
-        },
-        CreatedAt: "2025-01-27T11:00:00.000Z",
-        children: [
-          {
-            CommentID: 6,
-            Content: "这个建议很好，实例确实能让文章更有说服力。",
-            User: {
-              UserID: 6,
-              Username: "user6",
-              DisplayName: "孙八",
-              AvatarURL: ""
-            },
-            CreatedAt: "2025-01-27T11:15:00.000Z",
-            children: []
-          }
-        ]
-      }
-    ]
-    
-    // 尝试真实API调用，如果失败则使用模拟数据
-    let payload
-    try {
-      const res = await getCommentTree(route.params.id, {
-        status: 'approved',
-        page: commentPage.value,
-        pageSize: commentPageSize.value
-      })
-      payload = parseApiPayload(res)
-    } catch (apiError) {
-      payload = mockComments
-    }
-    
-    const newComments = Array.isArray(payload) ? payload : (payload?.items || payload?.list || [])
-    
+    const commentTreeResponse = await getCommentTree(route.params.id, {
+      status: 'approved',
+      page: commentPage.value,
+      pageSize: commentPageSize.value
+    })
+    const { list: nextComments, pagination: nextPagination } = normalizeCommentTreeResponse(commentTreeResponse)
+
     if (reset) {
-      comments.value = newComments
+      comments.value = nextComments
     } else {
-      comments.value.push(...newComments)
+      comments.value.push(...nextComments)
     }
-    hasMoreComments.value = newComments.length === commentPageSize.value
+
+    hasMoreComments.value = typeof nextPagination?.hasMore === 'boolean'
+      ? nextPagination.hasMore
+      : nextComments.length === commentPageSize.value
+
     if (hasMoreComments.value) {
-      commentPage.value++
+      const currentPage = Number(nextPagination?.page || commentPage.value)
+      commentPage.value = currentPage + 1
     }
   } catch (error) {
     console.error('[PostDetail.vue] 获取评论树失败:', error)
-    messageStore.show('评论功能暂时不可用', 'info')
+    messageStore.show('评论加载失败，请稍后重试', 'error')
   } finally {
     isLoadingComments.value = false
   }
@@ -977,7 +888,7 @@ async function loadComments(reset = false) {
 
 // 头像 URL 兼容处理
 import defaultAvatar from '@/assets/icons/login-active.png'
-const avatarBase = import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:3000'
+import { resolveAvatarUrl } from '@/utils/avatar'
 
 const authorAvatarSrc = computed(() => {
   // 后端字段为 user.AvatarURL；以下做兼容与清洗
@@ -993,15 +904,10 @@ const authorAvatarSrc = computed(() => {
     article.value?.User?.Avatar ||
     article.value?.Author?.Avatar
 
-  if (!raw) return defaultAvatar
-  const trimmed = String(raw).trim()
-  if (!trimmed) return defaultAvatar
+  const resolvedAvatar = resolveAvatarUrl(raw)
+  if (resolvedAvatar) return resolvedAvatar
+  return defaultAvatar
   // 统一分隔符为 '/'
-  const unified = trimmed.replace(/\\/g, '/')
-  if (unified.startsWith('http')) return unified
-  const normalizedPath = unified.startsWith('/') ? unified : `/${unified}`
-  const base = (avatarBase && avatarBase.endsWith('/')) ? avatarBase.slice(0, -1) : avatarBase
-  return base + normalizedPath
 })
 function onAuthorAvatarError(e) {
   if (e?.target) e.target.src = defaultAvatar
@@ -1113,21 +1019,81 @@ async function submitReply() {
 <style scoped>
 /* 基础背景和卡片样式 */
 .white-bg {
-  background: #ffffff;
+  position: relative;
+  background: transparent;
+  color: var(--text);
+  isolation: isolate;
+}
+
+.white-bg::before,
+.white-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.white-bg::before {
+  background:
+    radial-gradient(circle at 14% 12%, rgba(120, 163, 255, 0.14), transparent 18%),
+    radial-gradient(circle at 84% 10%, rgba(255, 123, 176, 0.1), transparent 16%),
+    radial-gradient(circle at 48% 82%, rgba(103, 239, 216, 0.08), transparent 24%);
+  opacity: 0.88;
+}
+
+.white-bg::after {
+  background-image:
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 8px),
+    linear-gradient(118deg, transparent 0 44%, rgba(255, 255, 255, 0.025) 50%, transparent 56%);
+  opacity: 0.12;
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(229, 231, 235, 0.8);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
   transition: all 0.3s ease;
 }
 
 .glass-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25), 0 4px 16px rgba(0, 0, 0, 0.15);
-  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.28);
+  border-color: rgba(120, 163, 255, 0.22);
+}
+
+.article-shell,
+.comment-shell,
+.category-panel,
+.related-panel,
+.tag-panel,
+.toc-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+.article-shell::before,
+.comment-shell::before,
+.category-panel::before,
+.related-panel::before,
+.tag-panel::before,
+.toc-shell::before {
+  content: "";
+  position: absolute;
+  inset: -30% auto -30% -18%;
+  width: 32%;
+  background: linear-gradient(120deg, transparent 0 18%, rgba(255, 255, 255, 0.05) 28%, rgba(120, 163, 255, 0.24) 48%, rgba(255, 123, 176, 0.18) 66%, transparent 100%);
+  transform: translateX(-180%) skewX(-18deg);
+  opacity: 0.48;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: detailSweep 9.2s ease-in-out infinite;
+}
+
+.comment-shell::before,
+.related-panel::before,
+.tag-panel::before {
+  animation-delay: -2.8s;
 }
 
 /* 分类导航样式 */
@@ -1140,7 +1106,7 @@ async function submitReply() {
 }
 
 .category-item:hover {
-  background: rgba(67, 56, 202, 0.1);
+  background: rgba(120, 163, 255, 0.1);
   transform: translateX(4px);
 }
 
@@ -1161,19 +1127,75 @@ async function submitReply() {
 
 .article-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.24);
+}
+
+.related-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.related-card::before,
+.related-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.related-card::before {
+  inset: -24% auto -24% -18%;
+  width: 34%;
+  background: linear-gradient(120deg, transparent 0 18%, rgba(255, 255, 255, 0.04) 28%, rgba(120, 163, 255, 0.24) 48%, rgba(255, 123, 176, 0.14) 66%, transparent 100%);
+  transform: translateX(-180%) skewX(-18deg);
+  opacity: 0.52;
+  mix-blend-mode: screen;
+  animation: detailSweep 8.2s ease-in-out infinite;
+}
+
+.related-card::after {
+  left: 16px;
+  right: 16px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(120, 163, 255, 0.92), rgba(255, 123, 176, 0.68), transparent);
+  box-shadow: 0 0 18px rgba(120, 163, 255, 0.16);
+}
+
+.related-card:hover::after {
+  right: 32px;
 }
 
 /* 目录卡片样式 */
+.sidebar-stack {
+  z-index: 10;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.sidebar-stack::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-stack::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-stack::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+.sidebar-stack::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
 .toc-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(229, 231, 235, 0.8);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
   border-radius: 12px;
   transition: all 0.3s ease;
-  position: sticky;
-  z-index: 10;
 }
 
 .toc-card nav {
@@ -1190,24 +1212,24 @@ async function submitReply() {
 }
 
 .toc-card nav::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.5);
+  background: rgba(255, 255, 255, 0.18);
   border-radius: 2px;
 }
 
 .toc-card nav::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.8);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .toc-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+  border-color: rgba(120, 163, 255, 0.22);
 }
 
 .toc-item {
   display: block;
   padding: 8px 16px;
-  color: #6b7280;
+  color: var(--muted);
   text-decoration: none;
   font-size: 13px;
   border-radius: 6px;
@@ -1217,14 +1239,14 @@ async function submitReply() {
 }
 
 .toc-item:hover {
-  background: rgba(99, 102, 241, 0.05);
-  color: #6366f1;
+  background: rgba(120, 163, 255, 0.08);
+  color: var(--accent);
   transform: translateX(4px);
 }
 
 .toc-item.active {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
+  background: rgba(120, 163, 255, 0.12);
+  color: var(--accent);
   font-weight: 500;
 }
 
@@ -1236,7 +1258,7 @@ async function submitReply() {
 .toc-item.level-3 {
   padding-left: 32px;
   font-size: 11px;
-  color: #9ca3af;
+  color: rgba(158, 201, 218, 0.86);
 }
 
 .toc-item.level-2::before {
@@ -1258,13 +1280,13 @@ async function submitReply() {
   left: 0;
   width: 100%;
   height: 3px;
-  background: rgba(229, 231, 235, 0.3);
+  background: rgba(255, 255, 255, 0.08);
   z-index: 1001;
 }
 
 .scroll-progress {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3));
   width: 0%;
   transition: width 0.1s ease;
 }
@@ -1273,6 +1295,15 @@ async function submitReply() {
 .article-content {
   width: 100%;
   overflow-x: hidden;
+}
+
+@keyframes detailSweep {
+  0% {
+    transform: translateX(-180%) skewX(-18deg);
+  }
+  46%, 100% {
+    transform: translateX(340%) skewX(-18deg);
+  }
 }
 
 /* 响应式布局优化 */
@@ -1299,6 +1330,11 @@ async function submitReply() {
   .w-full {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  .white-bg > .w-full {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }
 
@@ -1331,13 +1367,13 @@ async function submitReply() {
 @media (max-width: 640px) {
   /* 超小屏幕优化 */
   .px-4 {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    padding-left: 0;
+    padding-right: 0;
   }
   
   .py-6 {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.75rem;
   }
   
   .space-x-4 > * + * {
@@ -1345,7 +1381,124 @@ async function submitReply() {
   }
   
   .space-y-6 > * + * {
-    margin-top: 1rem;
+    margin-top: 0.75rem;
+  }
+
+  .glass-card {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .article-shell > .p-8,
+  .article-shell > .px-8.py-6,
+  .comment-shell {
+    padding: 0.875rem;
+  }
+
+  .article-author-row img {
+    margin-right: 0;
+  }
+
+  .article-action-group {
+    width: 100%;
+  }
+
+  .white-bg > .w-full {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .white-bg .grid.grid-cols-1 {
+    gap: 0.75rem;
+  }
+
+  .article-shell {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .article-shell > .p-8,
+  .article-shell > .px-8.py-6 {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .article-shell .text-4xl {
+    font-size: 1.45rem;
+    line-height: 1.9rem;
+  }
+
+  .article-author-row,
+  .article-footer-bar,
+  .comment-shell {
+    font-size: 12px;
+  }
+
+  .tag-cloud {
+    gap: 0.4rem;
+  }
+
+  .tag-cloud span {
+    padding: 0.25rem 0.55rem;
+    font-size: 11px;
+  }
+
+  .article-content :deep(pre) {
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 0.75rem;
+    padding: 0.875rem 0.875rem 0.875rem 2.9rem !important;
+  }
+
+  .article-content :deep(pre code) {
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .article-content :deep(h1) {
+    font-size: 1.3rem;
+  }
+
+  .article-content :deep(h2) {
+    font-size: 1.15rem;
+  }
+
+  .article-content :deep(h3) {
+    font-size: 1rem;
+  }
+
+  .article-content :deep(p),
+  .article-content :deep(li),
+  .article-content :deep(blockquote) {
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .article-content :deep(ul),
+  .article-content :deep(ol) {
+    padding-left: 1.1rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .glass-card {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .text-4xl {
+    font-size: 1.3rem;
+    line-height: 1.7rem;
+  }
+
+  .article-shell > .p-8,
+  .article-shell > .px-8.py-6,
+  .comment-shell,
+  .toc-card,
+  .related-panel,
+  .tag-panel,
+  .category-panel {
+    padding: 0.75rem !important;
   }
 }
 
@@ -1363,32 +1516,36 @@ async function submitReply() {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: rgba(255, 255, 255, 0.16);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .article-content :deep(h1) {
   @apply text-3xl font-bold my-6;
+  scroll-margin-top: 120px;
 }
 
 .article-content :deep(h2) {
   @apply text-2xl font-bold my-5;
+  scroll-margin-top: 120px;
 }
 
 .article-content :deep(h3) {
   @apply text-xl font-bold my-4;
+  scroll-margin-top: 120px;
 }
 
 .article-content :deep(p) {
-  @apply my-4 leading-7 text-gray-800;
+  @apply my-4 leading-7;
+  color: var(--text);
 }
 
 .article-content :deep(pre) {
@@ -1410,7 +1567,9 @@ async function submitReply() {
 }
 
 .article-content :deep(blockquote) {
-  @apply my-4 pl-4 border-l-4 border-gray-300 text-gray-700;
+  @apply my-4 pl-4 border-l-4;
+  border-color: rgba(120, 163, 255, 0.28);
+  color: var(--muted);
 }
 
 .article-content :deep(img) {
@@ -1418,7 +1577,12 @@ async function submitReply() {
 }
 
 .article-content :deep(a) {
-  @apply text-blue-500 hover:underline;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.article-content :deep(a:hover) {
+  text-decoration: underline;
 }
 
 .article-content :deep(table) {
@@ -1427,7 +1591,8 @@ async function submitReply() {
 
 .article-content :deep(th),
 .article-content :deep(td) {
-  @apply border border-gray-300 p-2;
+  @apply border p-2;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 /* 代码块样式优化 */
@@ -1457,7 +1622,9 @@ async function submitReply() {
 
 /* 行内代码样式 */
 .article-content :deep(code:not(pre code)) {
-  @apply px-2 py-0.5 bg-gray-100 rounded text-pink-600 mx-1;
+  @apply px-2 py-0.5 rounded mx-1;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffd6e6;
   font-family: Consolas, Monaco, 'Andale Mono', monospace;
   font-size: 0.9em;
 }
@@ -1471,7 +1638,8 @@ async function submitReply() {
 
 /* 确保普通段落不会被误识别为代码块 */
 .article-content :deep(p) {
-  @apply my-4 leading-7 text-gray-800 whitespace-pre-wrap;
+  @apply my-4 leading-7 whitespace-pre-wrap;
+  color: var(--text);
 }
 
 /* 代码高亮主题颜色 */

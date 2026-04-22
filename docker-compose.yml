@@ -1,0 +1,139 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: blog-mysql
+    restart: unless-stopped
+    env_file:
+      - ./.env.production
+    environment:
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    volumes:
+      - my-blog_db_data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    ports:
+      - "127.0.0.1:3306:3306"
+    networks:
+      - blog-network
+    mem_limit: 300m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$${MYSQL_ROOT_PASSWORD}\""]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: blog-redis
+    restart: unless-stopped
+    env_file:
+      - ./.env.production
+    command: ["sh", "-c", "redis-server --requirepass \"$${REDIS_PASSWORD}\" --maxmemory 64mb --maxmemory-policy allkeys-lru"]
+    volumes:
+      - my-blog_redis_data:/data
+    ports:
+      - "127.0.0.1:6380:6379"
+    networks:
+      - blog-network
+    mem_limit: 100m
+    memswap_limit: 100m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
+      timeout: 3s
+      retries: 5
+      interval: 30s
+
+  backend:
+    image: my-blog-backend:prod
+    build:
+      context: ./backend/backend
+      dockerfile: Dockerfile
+    container_name: blog-backend
+    restart: unless-stopped
+    env_file:
+      - ./.env.production
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      UPLOAD_PATH: /app/uploads
+      UPLOAD_IMAGES_PATH: /app/uploads/images
+      UPLOAD_AVATERS_PATH: /app/uploads/avaters
+      TRUST_PROXY: 1
+      RISK_GUARD_ENABLED: "true"
+      DB_SYNC_ON_START: "false"
+    volumes:
+      - my-blog_uploads:/app/uploads
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - blog-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/healthz"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+      start_period: 40s
+
+  frontend:
+    image: my-blog-frontend:prod
+    build:
+      context: ./fontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: blog-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10001:80"
+    networks:
+      - blog-network
+    mem_limit: 80m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/ || exit 1"]
+      timeout: 5s
+      retries: 3
+      interval: 30s
+
+networks:
+  blog-network:
+    name: blog-network
+    driver: bridge
+
+volumes:
+  my-blog_db_data:
+    name: my-blog_db_data
+  my-blog_uploads:
+    name: my-blog_uploads
+  my-blog_redis_data:
+    name: my-blog_redis_data

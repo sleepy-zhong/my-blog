@@ -5,14 +5,14 @@
 </template>
 
 <script setup>
-import { onMounted, watch, ref, toRefs, onUnmounted } from 'vue'
+import { onMounted, watch, ref, onUnmounted } from 'vue'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 // 直接本地引入中文语言包，避免网络加载失败
 import 'vditor/dist/js/i18n/zh_CN.js'
-import MarkdownIt from 'markdown-it'
 import { uploadAttachment, lookupAttachmentByHash, previewAttachment } from '@/api/attachments'
 import { attachmentConfig, buildPreviewUrl } from '@/config/attachments'
+import { sanitizeHtml } from '@/utils/htmlSanitizer'
 
 const props = defineProps({
   content: String,
@@ -79,13 +79,16 @@ onMounted(() => {
       delay: 500,
       maxWidth: 1000,
       mode: 'both',
+      transform(html) {
+        return sanitizeHtml(html, { allowBlobUrl: true })
+      },
       markdown: {
         toc: true,
         mark: true,
         footnotes: true,
         autoSpace: true,
         fixTermTypo: true,
-        sanitize: false,
+        sanitize: true,
         listStyle: true,
         codeBlockPreview: true,
         mathBlockPreview: true,

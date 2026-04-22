@@ -23,7 +23,6 @@
 
 <script setup>
 import Pagination from './Pagination.vue'
-import { defineProps, defineEmits } from 'vue'
 const props = defineProps({
   comments: { type: Array, default: () => [] },
   page: { type: Number, default: 1 },

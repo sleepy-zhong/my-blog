@@ -19,12 +19,12 @@
     </div>
     <div class="mb-4">
       <label class="block mb-1 font-semibold">可见范围</label>
-      <select v-model="localMeta.visibility" class="input">
-        <option value="public">全部可见</option>
-        <option value="private">仅我可见</option>
-        <option value="fans">粉丝可见</option>
-        <option value="vip">VIP可见</option>
-      </select>
+      <AppSelect
+        v-model="localMeta.visibility"
+        class="input"
+        :options="visibilityOptions"
+        placeholder="全部可见"
+      />
     </div>
     <div class="mb-4">
       <label class="block mb-1 font-semibold">定时发布</label>
@@ -35,12 +35,19 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import AppSelect from '@/components/AppSelect.vue'
 const props = defineProps({
   modelValue: { type: Object, default: () => ({}) }
 })
 const emit = defineEmits(['update:modelValue'])
 
 const localMeta = ref({ ...props.modelValue, tagsStr: (props.modelValue.tags || []).join(','), categoriesStr: (props.modelValue.categories || []).join(',') })
+const visibilityOptions = [
+  { label: '全部可见', value: 'public' },
+  { label: '仅我可见', value: 'private' },
+  { label: '粉丝可见', value: 'fans' },
+  { label: 'VIP可见', value: 'vip' }
+]
 
 watch(() => props.modelValue, (val) => {
   localMeta.value = { ...val, tagsStr: (val.tags || []).join(','), categoriesStr: (val.categories || []).join(',') }

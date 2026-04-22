@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-100 to-blue-50 flex flex-col items-center py-8">
-    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 p-8">
-      <div class="flex items-center mb-8">
+  <div class="article-import-page flex flex-col items-center px-3 sm:px-4 py-5 sm:py-8">
+    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 p-5 sm:p-8">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center mb-8">
         <div class="text-3xl font-bold text-gray-800 flex-1">发布文章</div>
         <button class="btn-primary" :disabled="saving || !content" @click="onSave">{{ saving ? '保存中...' : '发布' }}</button>
       </div>
-      <form @submit.prevent="onImport" class="flex gap-4 items-center mb-8">
-        <input type="file" ref="fileInput" @change="onFileChange" accept=".doc,.docx,.md,.txt,.rtf,.pdf" class="border rounded-xl px-4 py-2 shadow" />
+      <form @submit.prevent="onImport" class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center mb-8">
+        <input type="file" ref="fileInput" @change="onFileChange" accept=".doc,.docx,.md,.txt,.rtf,.pdf" class="border rounded-xl px-4 py-2 shadow w-full" />
         <button type="submit" class="btn-primary" :disabled="loading">{{ loading ? '上传中...' : '上传文档' }}</button>
       </form>
       <div v-if="error" class="text-red-500 mb-4">{{ error }}</div>
@@ -23,7 +23,7 @@
           <label class="block mb-2 text-lg font-semibold">正文内容</label>
           <textarea v-model="content" class="input min-h-[240px]" placeholder="可粘贴或编辑正文 Markdown"></textarea>
         </div>
-        <div class="flex gap-8 mt-8">
+        <div class="import-preview-layout flex flex-col lg:flex-row gap-8 mt-8">
           <!-- 目录区 -->
           <aside class="w-64 sticky top-20 self-start hidden md:block">
             <div class="bg-white/80 rounded-xl shadow p-4 border border-gray-100">
@@ -230,6 +230,30 @@ async function onSave() {
 </script>
 
 <style scoped>
+.article-import-page {
+  width: 100%;
+  min-height: 100vh;
+}
+
 .input { @apply border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-200 transition; }
 .btn-primary { @apply bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600 transition font-bold shadow; }
-</style> 
+
+@media (max-width: 640px) {
+  .import-preview-layout {
+    gap: 1rem;
+  }
+
+  .btn-primary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .article-import-page {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.75rem;
+    padding-bottom: 1rem;
+  }
+}
+</style>

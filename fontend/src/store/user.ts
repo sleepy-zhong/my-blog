@@ -1,91 +1,142 @@
-// src/store/user.ts
 import { defineStore as definePiniaStore } from 'pinia'
-import { getCurrentUser } from '../api/user'
+import { getCurrentUser, logout as logoutApi } from '../api/user'
+
+export const AUTH_EXPIRED_EVENT = 'app:auth-expired'
+
+let messageTimer: ReturnType<typeof setTimeout> | null = null
 
 interface UserInfo {
   UserID: number
   Username: string
-  Roles: string[]
-  // 其他字段
+  DisplayName?: string
+  Roles?: string[]
+  AvatarURL?: string
+  Email?: string
+  PhoneNumber?: string
+  Bio?: string
 }
 
 const USER_CACHE_KEY = 'user_cache'
 const USER_CACHE_EXPIRE_KEY = 'user_cache_expire'
-const CACHE_DURATION = 168 * 60 * 60 * 1000 // 7天
+const CACHE_DURATION = 168 * 60 * 60 * 1000
+
+function clearUserCache() {
+  localStorage.removeItem(USER_CACHE_KEY)
+  localStorage.removeItem(USER_CACHE_EXPIRE_KEY)
+}
+
+function normalizeUser(user: UserInfo | null) {
+  if (!user) return null
+
+  if (Array.isArray(user.Roles) && user.Roles.length && typeof user.Roles[0] === 'object') {
+    user.Roles = user.Roles.map((role: any) => role?.Name).filter(Boolean)
+  }
+
+  return user
+}
 
 export const useUserStore = definePiniaStore('user', {
   state: () => ({
-    token: localStorage.getItem('token') || '',
+    token: '',
     user: null as UserInfo | null,
     loading: false,
+    sessionReady: false,
   }),
   actions: {
-    setToken(token: string) {
-      // 登录新用户时，清除旧用户信息和缓存
-      this.token = token
+    setToken(_token: string) {
+      // 兼容旧调用，新的登录态由 HttpOnly Cookie 维护。
+      this.token = 'cookie-session'
+      this.sessionReady = false
       this.user = null
-      localStorage.setItem('token', token)
-      localStorage.removeItem(USER_CACHE_KEY)
-      localStorage.removeItem(USER_CACHE_EXPIRE_KEY)
+      clearUserCache()
     },
     clearToken() {
       this.token = ''
-      localStorage.removeItem('token')
       this.user = null
-      localStorage.removeItem(USER_CACHE_KEY)
-      localStorage.removeItem(USER_CACHE_EXPIRE_KEY)
+      this.sessionReady = true
+      clearUserCache()
     },
     async fetchUser(force = false) {
-      if (!this.token) {
-        this.user = null
-        localStorage.removeItem(USER_CACHE_KEY)
-        localStorage.removeItem(USER_CACHE_EXPIRE_KEY)
-        return
+      if (!force && this.sessionReady) {
+        return this.user
       }
-      // 检查缓存
-      const cacheStr = localStorage.getItem(USER_CACHE_KEY)
-      const expireStr = localStorage.getItem(USER_CACHE_EXPIRE_KEY)
-      const now = Date.now()
-      if (!force && cacheStr && expireStr && now < Number(expireStr)) {
-        try {
-          this.user = JSON.parse(cacheStr)
-          return
-        } catch {
-          // 缓存损坏，继续请求
-        }
-      }
+
       this.loading = true
       try {
         const res = await getCurrentUser()
-        let user = res.data || res
-        if (user.data) user = user.data // 兼容 {code, data: {...}}
-        if (Array.isArray(user.Roles) && user.Roles.length && typeof user.Roles[0] === 'object') {
-          user.Roles = user.Roles.map((r: any) => r.Name)
-        }
+        const user = normalizeUser((res?.data || res) as UserInfo)
+        const now = Date.now()
+
         this.user = user
-        // 写入缓存
-        localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user))
-        localStorage.setItem(USER_CACHE_EXPIRE_KEY, (now + CACHE_DURATION).toString())
-      } catch {
+        this.token = user ? 'cookie-session' : ''
+        this.sessionReady = true
+
+        if (user) {
+          localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user))
+          localStorage.setItem(USER_CACHE_EXPIRE_KEY, String(now + CACHE_DURATION))
+        } else {
+          clearUserCache()
+        }
+
+        return this.user
+      } catch (error) {
         this.user = null
-        localStorage.removeItem(USER_CACHE_KEY)
-        localStorage.removeItem(USER_CACHE_EXPIRE_KEY)
+        this.token = ''
+        this.sessionReady = true
+        clearUserCache()
+        throw error
       } finally {
         this.loading = false
       }
     },
-    logout() {
-      this.clearToken()
-    }
+    async hydrateFromCache() {
+      const cacheStr = localStorage.getItem(USER_CACHE_KEY)
+      const expireStr = localStorage.getItem(USER_CACHE_EXPIRE_KEY)
+      const now = Date.now()
+
+      if (!cacheStr || !expireStr || now >= Number(expireStr)) {
+        clearUserCache()
+        return null
+      }
+
+      try {
+        const cachedUser = normalizeUser(JSON.parse(cacheStr))
+        this.user = cachedUser
+        this.token = cachedUser ? 'cookie-session' : ''
+        return this.user
+      } catch {
+        clearUserCache()
+        return null
+      }
+    },
+    async initSession(force = false) {
+      if (force) {
+        return this.fetchUser(true)
+      }
+
+      if (this.sessionReady) {
+        return this.user
+      }
+
+      return this.fetchUser()
+    },
+    async logout() {
+      try {
+        await logoutApi()
+      } catch {
+        // 即使后端退出失败，也要清理本地状态。
+      } finally {
+        this.clearToken()
+      }
+    },
   },
   getters: {
-    isLogin: (state) => !!state.token && !!state.user,
+    isLogin: (state) => !!state.user,
     username: (state) => state.user?.Username || '',
     roles: (state) => state.user?.Roles || [],
-  }
+  },
 })
 
-// 全局 loading 状态
 export const useLoadingStore = definePiniaStore('loading', {
   state: () => ({
     loading: false as boolean,
@@ -103,7 +154,6 @@ export const useLoadingStore = definePiniaStore('loading', {
   },
 })
 
-// 全局消息（如全局提示、错误提示）
 export const useMessageStore = definePiniaStore('message', {
   state: () => ({
     message: '' as string,
@@ -111,12 +161,26 @@ export const useMessageStore = definePiniaStore('message', {
     visible: false as boolean,
   }),
   actions: {
-    show(msg: string, type: 'success' | 'error' | 'info' = 'info') {
+    show(msg: string, type: 'success' | 'error' | 'info' = 'info', duration = 3000) {
+      if (messageTimer) {
+        clearTimeout(messageTimer)
+        messageTimer = null
+      }
       this.message = msg
       this.type = type
       this.visible = true
+
+      if (duration > 0) {
+        messageTimer = setTimeout(() => {
+          this.hide()
+        }, duration)
+      }
     },
     hide() {
+      if (messageTimer) {
+        clearTimeout(messageTimer)
+        messageTimer = null
+      }
       this.visible = false
       this.message = ''
       this.type = ''
@@ -124,7 +188,6 @@ export const useMessageStore = definePiniaStore('message', {
   },
 })
 
-// 全局主题（theme）
 export const useThemeStore = definePiniaStore('theme', {
   state: () => ({
     dark: false as boolean,
@@ -141,12 +204,10 @@ export const useThemeStore = definePiniaStore('theme', {
   },
 })
 
-// 全局设置（settings）
 export const useSettingsStore = definePiniaStore('settings', {
   state: () => ({
     siteName: 'MyBlog',
     logo: '',
-    // 其他全局设置
   }),
   actions: {
     setSiteName(name: string) {

@@ -1,28 +1,29 @@
-# =============== 通用 ===============
-.DS_Store
-Thumbs.db
-*.log
-.idea
-.vscode
-npm-debug.log*
-
-# =============== 前端 ===============
+node_modules/
+backend/backend/node_modules/
 fontend/node_modules/
+fontend-minimal/node_modules/
+
+dist/
 fontend/dist/
+logs/
+backups/
+*.log
+
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+backend/backend/.env
+backend/backend/.env.*
+!backend/backend/.env.example
+!backend/backend/.env.production.example
+backend/backend/uploads/
+backend/backend/logs/
+
 fontend/.env
 fontend/.env.*
-fontend/coverage/
+!fontend/.env.example
 
-# =============== 后端 ===============
-backend/node_modules/
-backend/.env
-backend/.env.*
-backend/uploads/
-backend/coverage/
-backend/storage/logs/
-!backend/uploads/.gitkeep
-
-# =============== 系统文件 ===============
-*.swp
-*.swo
-*~
+.idea/
+.DS_Store

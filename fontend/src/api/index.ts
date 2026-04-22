@@ -1,32 +1,110 @@
-import axios from 'axios'
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { AUTH_EXPIRED_EVENT } from '@/store/user'
 
 const apiBaseURL = import.meta?.env?.VITE_API_BASE_URL || '/'
 
 const instance = axios.create({
   baseURL: apiBaseURL,
   timeout: 15000,
-  withCredentials: false,
+  withCredentials: true,
 })
 
-instance.interceptors.request.use(config => {
-  const token = localStorage.getItem('token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
+const refreshClient = axios.create({
+  baseURL: apiBaseURL,
+  timeout: 15000,
+  withCredentials: true,
 })
+
+type RetryableConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean
+}
+
+const SKIP_REFRESH_PATHS = [
+  '/api/users/login',
+  '/api/users/login/code',
+  '/api/users/register',
+  '/api/users/register/code',
+  '/api/users/refresh',
+  '/api/users/forgot-password',
+  '/api/users/forgot-password/code',
+]
+
+let refreshPromise: Promise<unknown> | null = null
+
+function clearLocalAuthCache() {
+  localStorage.removeItem('user_cache')
+  localStorage.removeItem('user_cache_expire')
+}
+
+function notifyAuthExpired() {
+  clearLocalAuthCache()
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT))
+  }
+}
+
+function normalizeRequestPath(url?: string) {
+  if (!url) return ''
+
+  try {
+    const absolute = new URL(url, window.location.origin)
+    return absolute.pathname
+  } catch {
+    return String(url)
+  }
+}
+
+function shouldSkipRefresh(url?: string) {
+  const path = normalizeRequestPath(url)
+  return SKIP_REFRESH_PATHS.some(prefix => path.startsWith(prefix))
+}
+
+async function refreshSessionOnce() {
+  if (!refreshPromise) {
+    refreshPromise = refreshClient.post('/api/users/refresh')
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+
+  return refreshPromise
+}
 
 instance.interceptors.response.use(
-  res => res.data,
-  err => {
-    const status = err?.response?.status
-    // 不在这里做跳转；交由路由守卫或具体页面处理
-    if (status === 401) {
-      // 可在此处选择清理本地 token，避免后续请求继续 401
-      // localStorage.removeItem('token')
+  response => response.data,
+  async (error: AxiosError) => {
+    const status = error.response?.status
+    const originalRequest = error.config as RetryableConfig | undefined
+
+    if (
+      status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !shouldSkipRefresh(originalRequest.url)
+    ) {
+      originalRequest._retry = true
+
+      try {
+        await refreshSessionOnce()
+        return instance(originalRequest)
+      } catch (refreshError) {
+        notifyAuthExpired()
+        return Promise.reject(refreshError)
+      }
     }
-    const message = err?.response?.data?.message || err?.message || '请求失败'
-    // 取消全局 alert，避免无意义弹窗
+
+    if (status === 401) {
+      notifyAuthExpired()
+    }
+
+    const message =
+      (error.response?.data as { message?: string } | undefined)?.message ||
+      error.message ||
+      '请求失败'
     console.error('[API Error]', message)
-    return Promise.reject(err)
+
+    return Promise.reject(error)
   }
 )
 

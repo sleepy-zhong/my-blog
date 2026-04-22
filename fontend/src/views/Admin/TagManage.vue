@@ -1,7 +1,7 @@
 <template>
-  <Card>
+  <Card class="tag-manage">
     <template #header>
-      <div class="flex items-center gap-2 w-full">
+      <div class="tag-header flex items-center gap-2 w-full">
         <h2 class="text-lg font-semibold text-gray-800 flex-1">标签管理</h2>
         <button class="btn-primary" @click="onAdd">新建标签</button>
       </div>
@@ -11,6 +11,17 @@
       <LoadingState />
     </div>
     <template v-else>
+      <div class="tag-filter-bar">
+        <input
+          v-model.trim="keyword"
+          type="text"
+          class="input tag-filter-field"
+          placeholder="搜索标签名称或描述"
+          @keyup.enter="fetchTags"
+        />
+        <button class="btn-secondary" @click="resetFilters">重置</button>
+        <button class="btn-primary" @click="fetchTags">筛选</button>
+      </div>
       <div v-if="error">
         <ErrorState :message="error" @retry="fetchTags" />
       </div>
@@ -21,8 +32,8 @@
           </template>
         </EmptyState>
       </div>
-      <div v-else class="overflow-x-auto">
-        <table class="w-full">
+      <div v-else class="tag-table-wrap overflow-x-auto">
+        <table class="tag-desktop-table w-full">
           <thead>
             <tr>
               <th>ID</th><th>标签名</th><th>描述</th><th>操作</th>
@@ -34,23 +45,50 @@
               <td>{{ tag.Name || tag.name }}</td>
               <td>{{ tag.Description || tag.description }}</td>
               <td>
-                <button @click="onEdit(tag)" class="btn">编辑</button>
-                <button @click="onDelete(tag)" class="btn-danger">删除</button>
+                <div class="tag-action-row">
+                  <button @click="onEdit(tag)" class="btn">编辑</button>
+                  <button @click="onDelete(tag)" class="btn-danger">删除</button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
+
+        <div class="tag-mobile-list mobile-card-list">
+          <article v-for="tag in tags" :key="`mobile-${tag.TagID || tag.id}`" class="mobile-card">
+            <div class="mobile-card-head">
+              <strong>#{{ tag.TagID || tag.id }}</strong>
+              <span class="mobile-badge">标签</span>
+            </div>
+            <div class="mobile-info-grid">
+              <div class="mobile-info-item">
+                <span>标签名</span>
+                <strong>{{ tag.Name || tag.name }}</strong>
+              </div>
+              <div class="mobile-info-item mobile-info-item-full">
+                <span>描述</span>
+                <strong>{{ tag.Description || tag.description || '-' }}</strong>
+              </div>
+            </div>
+            <div class="tag-action-row mobile-action-row">
+              <button @click="onEdit(tag)" class="btn">编辑</button>
+              <button @click="onDelete(tag)" class="btn-danger">删除</button>
+            </div>
+          </article>
+        </div>
       </div>
     </template>
 
     <template #footer>
-      <Pagination :page="page" :totalPages="totalPages" @update:page="onPageChange" />
+      <div class="tag-footer">
+        <Pagination :page="page" :totalPages="totalPages" @update:page="onPageChange" />
+      </div>
     </template>
   </Card>
 
   <!-- 新增/编辑标签弹窗 -->
-  <div v-if="showForm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-    <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-md relative">
+  <div v-if="showForm" class="tag-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div class="tag-modal bg-white rounded-xl shadow-xl p-8 w-full max-w-md relative">
       <button class="absolute top-4 right-6 text-gray-400 hover:text-blue-500 text-2xl" @click="showForm = false">×</button>
       <div class="space-y-6">
         <div class="text-center">
@@ -65,7 +103,7 @@
             <label class="block mb-2 font-medium">描述</label>
             <textarea v-model="form.Description" class="input w-full" rows="3" placeholder="请输入描述"></textarea>
           </div>
-          <div class="flex justify-end gap-3 pt-4 border-t">
+          <div class="tag-form-footer flex justify-end gap-3 pt-4 border-t">
             <button type="button" @click="showForm = false" class="btn-secondary">取消</button>
             <button type="submit" class="btn-primary" :disabled="saving">{{ saving ? '保存中...' : '保存' }}</button>
           </div>
@@ -187,6 +225,12 @@ function onPageChange(p) {
   fetchTags()
 }
 
+function resetFilters() {
+  keyword.value = ''
+  page.value = 1
+  fetchTags()
+}
+
 onMounted(fetchTags)
 </script>
 
@@ -202,4 +246,141 @@ th, td { text-align: left; }
 .btn:hover { background-color: #2563eb; }
 .btn-danger { background-color: #ef4444; color: #fff; border-radius: 0.375rem; padding: 0.25rem 0.75rem; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .btn-danger:hover { background-color: #dc2626; }
+
+.tag-table-wrap table {
+  min-width: 700px;
+}
+
+.tag-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.tag-filter-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mobile-card-list {
+  display: none;
+}
+
+.tag-action-row,
+.tag-footer {
+  display: flex;
+}
+
+.tag-action-row {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag-footer {
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.tag-modal-backdrop {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.mobile-card {
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 10px 24px rgba(59, 130, 246, 0.08);
+}
+
+.mobile-card-head,
+.mobile-action-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mobile-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.mobile-info-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.mobile-info-item {
+  padding: 0.875rem;
+  border-radius: 0.875rem;
+  background: #f8fafc;
+  text-align: left;
+}
+
+.mobile-info-item span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.mobile-action-row {
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .tag-header,
+  .tag-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tag-form-footer > * {
+    width: 100%;
+  }
+
+  .tag-desktop-table {
+    display: none;
+  }
+
+  .tag-mobile-list {
+    display: grid;
+    gap: 0.875rem;
+  }
+
+  .tag-modal {
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+  }
+
+  .tag-filter-bar {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .tag-filter-bar {
+    margin-bottom: 0.75rem;
+  }
+
+  .tag-filter-field {
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 390px) {
+  .mobile-action-row > * {
+    flex: 1 1 100%;
+  }
+}
 </style>

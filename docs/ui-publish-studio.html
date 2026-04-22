@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publish Studio</title>
+  <style>
+    :root {
+      --bg: #eef3ff;
+      --panel: rgba(255, 255, 255, 0.86);
+      --soft: rgba(255, 255, 255, 0.7);
+      --line: rgba(70, 96, 228, 0.12);
+      --text: #16213d;
+      --muted: #6d7890;
+      --primary: #4b68f1;
+      --pink: #ff739d;
+      --green: #3eb98f;
+      --amber: #ffb14b;
+      --shadow: 0 24px 64px rgba(63, 81, 153, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at left top, rgba(75, 104, 241, 0.22), transparent 24%),
+        radial-gradient(circle at right top, rgba(255, 115, 157, 0.18), transparent 20%),
+        linear-gradient(180deg, #f8faff 0%, #eef3ff 45%, #fef9fd 100%);
+    }
+
+    .shell {
+      width: min(1380px, calc(100% - 30px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding: 16px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.84);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 20px;
+      letter-spacing: -0.03em;
+    }
+
+    .brand span,
+    .top-actions span,
+    .meta-card p,
+    .helper p,
+    .check-item p,
+    .asset p,
+    .preview p {
+      color: var(--muted);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .pill,
+    .button {
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .pill {
+      padding: 10px 14px;
+      background: rgba(75, 104, 241, 0.1);
+      color: var(--primary);
+    }
+
+    .button {
+      padding: 11px 18px;
+      background: linear-gradient(135deg, var(--primary), #6f88ff);
+      color: white;
+      box-shadow: 0 14px 28px rgba(75, 104, 241, 0.26);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 320px;
+      gap: 18px;
+    }
+
+    .column,
+    .editor,
+    .preview,
+    .meta-card,
+    .helper,
+    .checklist,
+    .asset-box {
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      border-radius: 28px;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+
+    .column,
+    .editor,
+    .preview {
+      padding: 22px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-title h2,
+    .editor h1 {
+      margin: 0;
+      letter-spacing: -0.04em;
+    }
+
+    .section-title h2 {
+      font-size: 24px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .meta-card,
+    .helper,
+    .checklist,
+    .asset-box {
+      padding: 18px;
+    }
+
+    .meta-card strong,
+    .helper strong,
+    .check-item strong,
+    .asset strong,
+    .preview-card strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .field {
+      margin-top: 12px;
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: rgba(22, 33, 61, 0.05);
+      color: var(--muted);
+      border: 1px solid rgba(75, 104, 241, 0.08);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chips span {
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(75, 104, 241, 0.1);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .editor {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(252, 252, 255, 0.88)),
+        var(--panel);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .tool {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(75, 104, 241, 0.1);
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .editor h1 {
+      font-size: clamp(30px, 4vw, 46px);
+      line-height: 1.08;
+      margin-bottom: 18px;
+    }
+
+    .editor p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.9;
+      font-size: 17px;
+    }
+
+    .callout {
+      padding: 18px;
+      border-left: 4px solid var(--primary);
+      border-radius: 18px;
+      background: rgba(75, 104, 241, 0.08);
+      margin: 24px 0;
+    }
+
+    .preview {
+      background:
+        radial-gradient(circle at top right, rgba(255, 115, 157, 0.16), transparent 26%),
+        rgba(255, 255, 255, 0.86);
+    }
+
+    .preview-card {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid rgba(75, 104, 241, 0.1);
+    }
+
+    .preview-cover {
+      height: 160px;
+      margin-bottom: 16px;
+      border-radius: 20px;
+      background:
+        linear-gradient(135deg, rgba(75, 104, 241, 0.86), rgba(255, 115, 157, 0.6)),
+        linear-gradient(135deg, #2645d2, #81a1ff);
+    }
+
+    .checklist {
+      margin-top: 16px;
+    }
+
+    .check-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .check-item {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.74);
+      border: 1px solid rgba(75, 104, 241, 0.08);
+    }
+
+    .status {
+      display: inline-flex;
+      margin-bottom: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .status.ok {
+      background: rgba(62, 185, 143, 0.16);
+      color: #207b5d;
+    }
+
+    .status.warn {
+      background: rgba(255, 177, 75, 0.18);
+      color: #9a6600;
+    }
+
+    .asset-box {
+      margin-top: 16px;
+    }
+
+    .asset-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .asset {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid rgba(75, 104, 241, 0.08);
+    }
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100% - 16px, 1380px);
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .top-actions {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <strong>Publish Studio</strong>
+        <span>面向博客创作者的文章工作台</span>
+      </div>
+      <div class="top-actions">
+        <span class="pill">自动保存中</span>
+        <span class="pill">草稿 #128</span>
+        <a class="button" href="#">发布文章</a>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="column">
+        <div class="section-title">
+          <h2>文章元信息</h2>
+        </div>
+        <div class="stack">
+          <section class="meta-card">
+            <strong>标题</strong>
+            <div class="field">为什么游客可见文章接口仍然可能返回 401</div>
+          </section>
+          <section class="meta-card">
+            <strong>摘要</strong>
+            <div class="field">围绕前端拦截器、后端鉴权配置和代理路径排查游客读取文章接口被拒绝的问题。</div>
+          </section>
+          <section class="meta-card">
+            <strong>标签</strong>
+            <div class="chips">
+              <span>Auth</span>
+              <span>Vue</span>
+              <span>SpringBoot</span>
+              <span>Debug</span>
+            </div>
+          </section>
+          <section class="helper">
+            <strong>发布建议</strong>
+            <p>左侧保留对 SEO、分类、标签和摘要的集中管理，适合你项目后台继续往内容型 CMS 方向扩。</p>
+          </section>
+        </div>
+      </aside>
+
+      <main class="editor">
+        <div class="toolbar">
+          <div class="tool">H1</div>
+          <div class="tool">H2</div>
+          <div class="tool">引用</div>
+          <div class="tool">代码块</div>
+          <div class="tool">封面</div>
+          <div class="tool">目录</div>
+          <div class="tool">预览</div>
+        </div>
+
+        <h1>把创作、校验和预览放在同一个工作面里</h1>
+        <p>相比传统后台里只有一个大文本框，这个工作台更像写作者的控制台。左边是文章元信息，中间是编辑区域，右边同时展示预览、发布检查和素材抽屉，减少来回切页。</p>
+        <p>这类布局很适合你的项目后台，因为你已经有文章管理功能，下一步可以让发布流程更清晰，而不是把所有配置藏在弹窗里。</p>
+        <div class="callout">
+          一篇文章能否顺利发布，不只是正文写完，还包括摘要、封面、标签、可读性和 SEO 信息是否齐全。
+        </div>
+        <p>如果你后续要把这个概念稿改造成实际页面，建议沿着当前后台结构，把文章新增和编辑页合并成一套更稳定的创作界面，并把“发布检查”做成实时面板，而不是提交后才报错。</p>
+      </main>
+
+      <aside class="preview">
+        <div class="section-title">
+          <h2>右侧控制区</h2>
+        </div>
+
+        <section class="preview-card">
+          <strong>实时预览</strong>
+          <div class="preview-cover"></div>
+          <p>这里展示封面、标题、摘要和首屏效果，发布前能快速确认文章卡片在前台列表里的观感。</p>
+        </section>
+
+        <section class="checklist">
+          <strong>发布检查</strong>
+          <div class="check-grid">
+            <div class="check-item">
+              <span class="status ok">passed</span>
+              <strong>标题长度合理</strong>
+              <p>标题适合出现在博客首页卡片和详情页头图区域。</p>
+            </div>
+            <div class="check-item">
+              <span class="status ok">passed</span>
+              <strong>摘要已填写</strong>
+              <p>摘要可用于列表页、分享卡片和 SEO 描述。</p>
+            </div>
+            <div class="check-item">
+              <span class="status warn">pending</span>
+              <strong>封面建议更新</strong>
+              <p>当前封面与技术排查主题不够匹配，建议换成更偏问题档案风格。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="asset-box">
+          <strong>素材抽屉</strong>
+          <div class="asset-list">
+            <div class="asset">
+              <strong>auth-flow.png</strong>
+              <p>用于说明游客访问和鉴权流程。</p>
+            </div>
+            <div class="asset">
+              <strong>database-init.jpg</strong>
+              <p>用于数据库初始化相关文章封面。</p>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

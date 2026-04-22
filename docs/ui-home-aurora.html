@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aurora Home</title>
+  <style>
+    :root {
+      --bg: #f5f8ff;
+      --bg-soft: rgba(255, 255, 255, 0.72);
+      --panel: rgba(255, 255, 255, 0.86);
+      --text: #14203f;
+      --muted: #69758d;
+      --primary: #5070ff;
+      --primary-deep: #2744c8;
+      --pink: #ff719d;
+      --orange: #ffb34d;
+      --line: rgba(80, 112, 255, 0.12);
+      --shadow: 0 22px 60px rgba(70, 93, 170, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(80, 112, 255, 0.24), transparent 26%),
+        radial-gradient(circle at 88% 8%, rgba(255, 113, 157, 0.2), transparent 22%),
+        linear-gradient(180deg, #fbfcff 0%, #edf3ff 52%, #fff6fb 100%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      width: min(1220px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 26px 0 48px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 16px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.64);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--pink));
+      color: white;
+      box-shadow: 0 14px 30px rgba(80, 112, 255, 0.28);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 18px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .nav-links a.active {
+      color: var(--text);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search,
+    .cta {
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .search {
+      padding: 11px 16px;
+      color: var(--muted);
+      min-width: 200px;
+    }
+
+    .cta {
+      padding: 11px 18px;
+      background: linear-gradient(135deg, var(--primary), #6789ff);
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 14px 28px rgba(80, 112, 255, 0.24);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.25fr 0.9fr;
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .hero-main,
+    .hero-side,
+    .section-card,
+    .post-card,
+    .track-card,
+    .subscribe,
+    .notice {
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 30px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-main {
+      position: relative;
+      overflow: hidden;
+      padding: 36px;
+      min-height: 480px;
+      background:
+        radial-gradient(circle at top right, rgba(255, 113, 157, 0.2), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(80, 112, 255, 0.2), transparent 34%),
+        rgba(255, 255, 255, 0.86);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(80, 112, 255, 0.1);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 18px 0 12px;
+      max-width: 680px;
+      font-size: clamp(34px, 5vw, 68px);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+    }
+
+    .hero-main p {
+      max-width: 640px;
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.85;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 18px;
+      border-radius: 16px;
+      font-weight: 700;
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, var(--primary), #6e8dff);
+      color: white;
+      box-shadow: 0 14px 30px rgba(80, 112, 255, 0.24);
+    }
+
+    .button.ghost {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--text);
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .stat {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(80, 112, 255, 0.12);
+    }
+
+    .stat strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat span {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-side {
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 28px 0 16px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -0.04em;
+    }
+
+    .section-title p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .feature {
+      padding: 18px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(80, 112, 255, 0.08), rgba(255, 255, 255, 0.86));
+      border: 1px solid var(--line);
+    }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .feature-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .feature-list div {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid rgba(80, 112, 255, 0.1);
+    }
+
+    .feature-list span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .lanes,
+    .posts,
+    .bottom {
+      display: grid;
+      gap: 18px;
+    }
+
+    .lanes {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .section-card {
+      padding: 22px;
+    }
+
+    .section-card h3 {
+      margin: 12px 0 10px;
+      font-size: 22px;
+    }
+
+    .section-card p,
+    .post-card p,
+    .track-card p,
+    .subscribe p,
+    .notice p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 179, 77, 0.18);
+      color: #a76400;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .posts {
+      grid-template-columns: 1.1fr 0.9fr 0.9fr;
+    }
+
+    .post-card {
+      overflow: hidden;
+    }
+
+    .post-cover {
+      height: 180px;
+      background:
+        linear-gradient(135deg, rgba(39, 68, 200, 0.78), rgba(255, 113, 157, 0.58)),
+        linear-gradient(135deg, #3558f6, #91b4ff);
+    }
+
+    .post-body {
+      padding: 22px;
+    }
+
+    .post-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .post-body h3 {
+      margin: 0 0 10px;
+      font-size: 24px;
+      line-height: 1.3;
+    }
+
+    .post-link {
+      display: inline-flex;
+      margin-top: 14px;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .bottom {
+      grid-template-columns: 1.15fr 0.85fr;
+      margin-top: 18px;
+    }
+
+    .track-card {
+      padding: 28px;
+    }
+
+    .track-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .track-item {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(80, 112, 255, 0.08);
+      border: 1px solid rgba(80, 112, 255, 0.12);
+    }
+
+    .track-item strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .subscribe,
+    .notice {
+      padding: 24px;
+    }
+
+    .email-box {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .email-box div {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(20, 32, 63, 0.06);
+      color: var(--muted);
+    }
+
+    .email-box button {
+      border: 0;
+      border-radius: 14px;
+      padding: 0 18px;
+      background: linear-gradient(135deg, var(--primary), var(--pink));
+      color: white;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1080px) {
+      .hero,
+      .posts,
+      .bottom {
+        grid-template-columns: 1fr;
+      }
+
+      .lanes,
+      .track-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100% - 20px, 1220px);
+      }
+
+      .nav-links,
+      .search {
+        width: 100%;
+      }
+
+      .nav-links {
+        overflow: auto;
+      }
+
+      .hero-main,
+      .hero-side,
+      .section-card,
+      .post-body,
+      .track-card,
+      .subscribe,
+      .notice {
+        padding: 20px;
+      }
+
+      .hero-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .email-box {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="nav">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div>
+          <div>My Blog</div>
+          <small style="color:#69758d;font-weight:600;">Content, Notes, Projects</small>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a class="active" href="#">首页</a>
+        <a href="#">文章</a>
+        <a href="#">专题</a>
+        <a href="#">归档</a>
+        <a href="#">关于</a>
+      </div>
+      <div class="nav-actions">
+        <div class="search">搜索文章、标签或项目...</div>
+        <a class="cta" href="#">开始阅读</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-main">
+        <span class="eyebrow">Aurora Editorial Layout</span>
+        <h1>把博客首页做成一张持续更新的内容地图，而不只是普通列表。</h1>
+        <p>这个版本更适合你的项目做站点门面。它保留现有博客的清爽气质，但把专题入口、作者表达和最新内容的组织方式做得更鲜明，首页会更像一份数字杂志。</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#">阅读最新专栏</a>
+          <a class="button ghost" href="#">查看全部分类</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat">
+            <strong>本月更新</strong>
+            <span>18</span>
+          </div>
+          <div class="stat">
+            <strong>专题栏目</strong>
+            <span>07</span>
+          </div>
+          <div class="stat">
+            <strong>累计访客</strong>
+            <span>24K</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="hero-side">
+        <div class="feature">
+          <span class="badge">Editorial Pick</span>
+          <strong>本周策展</strong>
+          <p>把近期最值得看的技术文章、折腾记录和生活笔记合并到一个更清晰的“主题串”里，首页不再只是时间倒序。</p>
+        </div>
+        <div class="feature-list">
+          <div>
+            <span>Series</span>
+            Vue + SpringBoot 博客全链路搭建
+          </div>
+          <div>
+            <span>Weekly</span>
+            写作系统、部署经验与问题复盘
+          </div>
+          <div>
+            <span>Archive</span>
+            用时间轴方式浏览历年项目与文章
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="section-title">
+      <h2>专题航线</h2>
+      <p>把项目里已有的文章、分类和标签改造成更好逛的入口。</p>
+    </div>
+    <section class="lanes">
+      <article class="section-card">
+        <span class="badge">Build Log</span>
+        <h3>博客搭建手记</h3>
+        <p>集中展示从数据库、后端接口到前端渲染的完整搭建过程，适合把零散文章聚合成教程型路线。</p>
+      </article>
+      <article class="section-card">
+        <span class="badge">Tech Notes</span>
+        <h3>开发问题档案</h3>
+        <p>把常见报错、鉴权问题、部署问题整理成“问题卡”，读者更容易按场景进入。</p>
+      </article>
+      <article class="section-card">
+        <span class="badge">Personal</span>
+        <h3>创作与生活</h3>
+        <p>保留博客作为个人表达空间的轻松感，让非技术内容也有独立层次，不被技术文章吞没。</p>
+      </article>
+    </section>
+
+    <div class="section-title">
+      <h2>最新文章</h2>
+      <p>主推一篇深内容，再搭配两篇次级内容，阅读入口更有节奏。</p>
+    </div>
+    <section class="posts">
+      <article class="post-card">
+        <div class="post-cover"></div>
+        <div class="post-body">
+          <div class="post-meta">
+            <span>April 09, 2026</span>
+            <span>12 min read</span>
+          </div>
+          <h3>为什么博客首页不该只有文章列表，而应该有内容结构</h3>
+          <p>首页承担的是站点气质和内容导航，而不只是“把最近文章摆出来”。这个方案把首页调整成专题入口、策展位和文章组合的集合页。</p>
+          <a class="post-link" href="#">阅读全文 →</a>
+        </div>
+      </article>
+      <article class="post-card">
+        <div class="post-body">
+          <div class="post-meta">
+            <span>专题更新</span>
+            <span>Deploy</span>
+          </div>
+          <h3>本地开发到上线部署的一次完整复盘</h3>
+          <p>从本地数据库连接、接口代理到 Nginx 转发，整理成能直接照着做的一条路径。</p>
+          <a class="post-link" href="#">打开专题 →</a>
+        </div>
+      </article>
+      <article class="post-card">
+        <div class="post-body">
+          <div class="post-meta">
+            <span>问题修复</span>
+            <span>Auth</span>
+          </div>
+          <h3>401 鉴权排查笔记</h3>
+          <p>把游客访问、白名单接口、前端拦截器和后端权限配置放在一个问题维度里讲清楚。</p>
+          <a class="post-link" href="#">查看详情 →</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="bottom">
+      <article class="track-card">
+        <div class="section-title" style="margin:0 0 14px;">
+          <h2>写作轨迹</h2>
+          <p>适合展示你的持续输出感。</p>
+        </div>
+        <p>把“最近写了什么”做成一条轻量时间线，让首页除了文章卡片之外，还有更强的作者存在感。</p>
+        <div class="track-grid">
+          <div class="track-item">
+            <strong>04 / 09</strong>
+            优化游客可见文章接口设计
+          </div>
+          <div class="track-item">
+            <strong>04 / 07</strong>
+            本地数据库初始化与端口切换记录
+          </div>
+          <div class="track-item">
+            <strong>04 / 05</strong>
+            重新整理后台管理入口与操作流
+          </div>
+        </div>
+      </article>
+
+      <div class="stack">
+        <section class="subscribe">
+          <div class="section-title" style="margin:0 0 12px;">
+            <h2>订阅更新</h2>
+          </div>
+          <p>让访客不只是浏览一篇，而是留在你的内容系统里。</p>
+          <div class="email-box">
+            <div>name@example.com</div>
+            <button>订阅</button>
+          </div>
+        </section>
+
+        <section class="notice">
+          <div class="section-title" style="margin:0 0 12px;">
+            <h2>站点公告</h2>
+          </div>
+          <p>近期将上线新的后台数据看板和文章编辑器结构。前台页面会同步改为更清晰的阅读与专题导航布局。</p>
+        </section>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,12 +1,12 @@
 <template>
   <div class="comment-item">
     <!-- 主评论或回复 -->
-    <div class="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors" 
+    <div class="comment-body flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors" 
          :class="{ 'border-l-2 border-blue-200 bg-blue-50/30': isReply }">
       <img :src="userAvatarSrc" class="w-10 h-10 rounded-full flex-shrink-0 object-cover"
            @error="onAvatarError" />
       <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 mb-2">
+        <div class="comment-head flex items-center gap-2 mb-2">
           <span class="font-semibold text-gray-900">{{ comment.User.DisplayName }}</span>
           <span class="text-xs text-gray-500">{{ formatTime(comment.CreatedAt) }}</span>
           <!-- 删除按钮 -->
@@ -28,7 +28,7 @@
         <div class="text-gray-800 mb-3 leading-relaxed">{{ comment.Content }}</div>
         
         <!-- 操作按钮 -->
-        <div class="flex items-center gap-4">
+        <div class="comment-actions flex items-center gap-4">
           <button 
             class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors flex items-center gap-1"
             @click="$emit('reply', comment)"
@@ -54,6 +54,7 @@ import { computed } from 'vue'
 import { useUserStore, useMessageStore } from '@/store/user'
 import { deleteComment } from '@/api/comment'
 import defaultAvatar from '@/assets/icons/login-active.png'
+import { resolveAvatarUrl } from '@/utils/avatar'
 
 defineOptions({ name: 'CommentNode' })
 
@@ -74,14 +75,8 @@ const userStore = useUserStore()
 const messageStore = useMessageStore()
 
 // 与导航保持一致：如果 AvatarURL 非 http，则拼接后端基址
-const backendBase = import.meta?.env?.VITE_API_BASE_URL || 'http://localhost:3000'
-
 const userAvatarSrc = computed(() => {
-  const url = props.comment?.User?.AvatarURL
-  if (!url) return defaultAvatar
-  if (url.startsWith('http')) return url
-  const normalized = url.startsWith('/') ? url : `/${url}`
-  return backendBase + normalized
+  return resolveAvatarUrl(props.comment?.User?.AvatarURL) || defaultAvatar
 })
 
 // 计算回复数量（仅对主评论有效）
@@ -173,4 +168,24 @@ function formatTime(timeStr) {
   content: '';
   @apply absolute left-6 top-full w-px h-4 bg-gray-200;
 }
-</style> 
+
+@media (max-width: 640px) {
+  .comment-body {
+    padding: 0.875rem 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .comment-head {
+    flex-wrap: wrap;
+  }
+
+  .comment-actions {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .comment-item:not(:last-child)::after {
+    left: 1.25rem;
+  }
+}
+</style>

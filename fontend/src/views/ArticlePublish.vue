@@ -1,193 +1,228 @@
-<template>
-  <div class="w-full px-6 py-6">
+﻿<template>
+  <div class="publish-page w-full px-3 sm:px-4 lg:px-6 py-4 sm:py-6">
     <Card>
       <template #header>
-        <div class="flex items-center justify-between w-full">
-          <h2 class="text-xl font-semibold text-gray-800">{{ isEdit ? '编辑文章' : '发布文章' }}</h2>
-          <button @click="router.back()" class="text-gray-400 hover:text-blue-500 transition-colors">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
+          <h2 class="text-xl font-semibold text-gray-800">
+            {{ isEdit ? '编辑文章' : '发布文章' }}
+          </h2>
+          <button
+            class="text-gray-400 hover:text-blue-500 transition-colors"
+            @click="router.back()"
+          >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
       </template>
 
+      <div
+        v-if="showValidation && validationSummary.length"
+        class="validation-alert mb-6"
+        role="alert"
+        aria-live="polite"
+      >
+        <div class="validation-alert-title">请先修正以下问题后再提交</div>
+        <ul class="validation-alert-list">
+          <li v-for="item in validationSummary" :key="item.field">
+            <span class="validation-alert-label">{{ item.label }}</span>
+            <span>{{ item.message }}</span>
+          </li>
+        </ul>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- 左侧表单区域 -->
         <div class="lg:col-span-1 space-y-6">
-          <!-- 基本信息 -->
           <Card>
             <template #header>
               <h3 class="text-base font-semibold text-gray-800">基本信息</h3>
             </template>
-            
+
             <div class="space-y-4">
-              <div>
+              <div
+                class="field-block"
+                data-field="title"
+                :class="{ 'field-block-error': validationErrors.title }"
+              >
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   文章标题 <span class="text-red-500">*</span>
                 </label>
-                <input 
-                  v-model="title" 
-                  class="input" 
+                <input
+                  v-model="title"
+                  class="input"
                   placeholder="请输入文章标题（5~100字）"
-                  :class="{ 'border-red-500': validationErrors.title }"
                   @blur="validateField('title')"
                 />
-                <div v-if="validationErrors.title" class="text-red-500 text-xs mt-1">{{ validationErrors.title }}</div>
+                <div v-if="validationErrors.title" class="field-error">
+                  {{ validationErrors.title }}
+                </div>
               </div>
 
-              <div>
+              <div
+                class="field-block"
+                data-field="summary"
+                :class="{ 'field-block-error': validationErrors.summary }"
+              >
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   文章摘要 <span class="text-red-500">*</span>
                 </label>
-                <textarea 
-                  v-model="meta.summary" 
-                  class="input" 
-                  rows="3" 
-                  placeholder="请输入摘要，帮助读者快速了解内容"
-                  :class="{ 'border-red-500': validationErrors.summary }"
+                <textarea
+                  v-model="meta.summary"
+                  class="input"
+                  rows="3"
+                  placeholder="请输入摘要，帮助读者快速了解文章内容"
                   @blur="validateField('summary')"
                 />
-                <div v-if="validationErrors.summary" class="text-red-500 text-xs mt-1">{{ validationErrors.summary }}</div>
+                <div v-if="validationErrors.summary" class="field-error">
+                  {{ validationErrors.summary }}
+                </div>
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">封面图片</label>
-                <div class="flex items-center gap-3">
-                  <input 
-                    type="file" 
-                    @change="onCoverChange" 
-                    accept="image/*" 
-                    class="hidden" 
+                <div class="flex flex-wrap items-center gap-3">
+                  <input
                     ref="coverInput"
+                    type="file"
+                    accept="image/*"
+                    class="hidden"
+                    @change="onCoverChange"
                   />
-                  <button 
-                    @click="$refs.coverInput.click()" 
-                    class="btn-secondary text-sm px-3 py-2"
-                  >
+                  <button class="btn-secondary text-sm px-3 py-2" @click="openCoverPicker">
                     选择图片
                   </button>
-                  <div v-if="meta.cover" class="w-16 h-16 bg-gray-100 rounded border overflow-hidden">
-                    <img :src="meta.cover" alt="封面预览" class="w-full h-full object-cover" />
+                  <div
+                    v-if="meta.cover"
+                    class="w-16 h-16 bg-gray-100 rounded border overflow-hidden"
+                  >
+                    <img
+                      :src="meta.cover"
+                      alt="封面预览"
+                      class="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
               </div>
 
-              <div>
+              <div class="field-block" data-field="visibility">
                 <label class="block text-sm font-medium text-gray-700 mb-2">可见性</label>
-                <select v-model="meta.visibility" class="input">
-                  <option value="public">公开</option>
-                  <option value="private">私密</option>
-                  <option value="password">密码保护</option>
-                </select>
+                <AppSelect
+                  v-model="meta.visibility"
+                  class="input"
+                  :options="visibilityOptions"
+                  placeholder="选择可见性"
+                />
               </div>
             </div>
           </Card>
 
-          <!-- 分类和标签 -->
           <Card>
             <template #header>
               <h3 class="text-base font-semibold text-gray-800">分类和标签</h3>
             </template>
-            
+
             <div class="space-y-4">
-              <div>
+              <div
+                class="field-block"
+                data-field="categories"
+                :class="{ 'field-block-error': validationErrors.categories }"
+              >
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   文章分类 <span class="text-red-500">*</span>
                 </label>
-                <div class="flex items-center gap-2">
-                  <select 
-                    v-model="selectedCategory" 
-                    @change="onCategoryChange"
+                <div class="flex items-start gap-2">
+                  <AppSelect
+                    v-model="meta.categories"
                     class="input flex-1"
-                    :class="{ 'border-red-500': validationErrors.categories }"
-                  >
-                    <option value="">选择分类</option>
-                    <option v-for="cat in categoryOptions" :key="cat.CategoryID" :value="cat.CategoryID">
-                      {{ cat.Name }}
-                    </option>
-                  </select>
-                  <button @click="showAddCategory = true" class="btn-secondary text-sm px-3 py-2">新增</button>
+                    :options="categoryOptions"
+                    label-key="Name"
+                    value-key="CategoryID"
+                    placeholder="选择分类"
+                    multiple
+                    searchable
+                  />
+                  <button class="btn-secondary text-sm px-3 py-2" @click="showAddCategory = true">
+                    新增
+                  </button>
                 </div>
-                <div class="flex flex-wrap gap-2 mt-2">
-                  <span 
-                    v-for="catId in meta.categories" 
-                    :key="catId" 
-                    class="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
-                  >
-                    {{ getCategoryName(catId) }}
-                    <button @click="removeCategory(catId)" class="text-blue-600 hover:text-blue-800">×</button>
-                  </span>
+                <div class="field-hint">支持多选和搜索，已选项目可在下拉面板中快速清空。</div>
+                <div v-if="validationErrors.categories" class="field-error">
+                  {{ validationErrors.categories }}
                 </div>
-                <div v-if="validationErrors.categories" class="text-red-500 text-xs mt-1">{{ validationErrors.categories }}</div>
               </div>
 
-              <div>
+              <div
+                class="field-block"
+                data-field="tags"
+                :class="{ 'field-block-error': validationErrors.tags }"
+              >
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   文章标签 <span class="text-red-500">*</span>
                 </label>
-                <div class="flex items-center gap-2">
-                  <select 
-                    v-model="selectedTag" 
-                    @change="onTagChange"
+                <div class="flex items-start gap-2">
+                  <AppSelect
+                    v-model="meta.tags"
                     class="input flex-1"
-                    :class="{ 'border-red-500': validationErrors.tags }"
-                  >
-                    <option value="">选择标签</option>
-                    <option v-for="tag in tagOptions" :key="tag.TagID" :value="tag.TagID">
-                      {{ tag.Name }}
-                    </option>
-                  </select>
-                  <button @click="showAddTag = true" class="btn-secondary text-sm px-3 py-2">新增</button>
+                    :options="tagOptions"
+                    label-key="Name"
+                    value-key="TagID"
+                    placeholder="选择标签"
+                    multiple
+                    searchable
+                  />
+                  <button class="btn-secondary text-sm px-3 py-2" @click="showAddTag = true">
+                    新增
+                  </button>
                 </div>
-                <div class="flex flex-wrap gap-2 mt-2">
-                  <span 
-                    v-for="tagId in meta.tags" 
-                    :key="tagId" 
-                    class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs"
-                  >
-                    {{ getTagName(tagId) }}
-                    <button @click="removeTag(tagId)" class="text-green-600 hover:text-green-800">×</button>
-                  </span>
+                <div class="field-hint">标签建议控制在 2~5 个，便于文章检索和推荐。</div>
+                <div v-if="validationErrors.tags" class="field-error">
+                  {{ validationErrors.tags }}
                 </div>
-                <div v-if="validationErrors.tags" class="text-red-500 text-xs mt-1">{{ validationErrors.tags }}</div>
               </div>
             </div>
           </Card>
 
-          <!-- 发布设置 -->
           <Card>
             <template #header>
               <h3 class="text-base font-semibold text-gray-800">发布设置</h3>
             </template>
-            
+
             <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">定时发布</label>
-                <input 
-                  v-model="meta.schedule" 
-                  type="datetime-local" 
+                <input
+                  v-model="meta.schedule"
+                  type="datetime-local"
                   class="input"
-                  :min="new Date().toISOString().slice(0, 16)"
+                  :min="scheduleMin"
                 />
-                <div class="text-xs text-gray-500 mt-1">留空则立即发布</div>
+                <div class="field-hint">留空则立即发布。</div>
               </div>
             </div>
           </Card>
         </div>
 
-        <!-- 右侧编辑器区域 -->
-        <div class="lg:col-span-2">
-          <Card class="h-full min-h-[600px]">
+        <div
+          class="lg:col-span-2 field-block"
+          data-field="content"
+          :class="{ 'field-block-error': validationErrors.content }"
+        >
+          <Card class="h-full min-h-[600px]" :class="{ 'editor-card-error': validationErrors.content }">
             <template #header>
               <h3 class="text-base font-semibold text-gray-800">文章内容</h3>
             </template>
-            
+
             <div class="h-full min-h-[500px]">
               <Suspense>
                 <template #default>
-                  <VditorEditor 
-                    v-model:content="content" 
+                  <VditorEditor
+                    v-model:content="content"
                     class="h-full min-h-[500px]"
                     :editor-token="editorToken"
                     :ensure-post-id="ensurePostId"
@@ -200,79 +235,104 @@
               </Suspense>
             </div>
           </Card>
+          <div v-if="validationErrors.content" class="field-error mt-3">
+            {{ validationErrors.content }}
+          </div>
         </div>
       </div>
 
-      <!-- 底部操作栏 -->
       <template #footer>
-        <div class="flex justify-end gap-3">
-          <button 
-            @click="onSaveDraft" 
-            :disabled="!title || saving" 
-            class="btn-secondary"
-          >
-            {{ saving && currentAction === 'draft' ? '保存中...' : '保存草稿' }}
-          </button>
-          <button 
-            @click="onSchedule" 
-            :disabled="!canSubmit || saving" 
-            class="btn-warning"
-            v-if="meta.schedule"
-          >
-            {{ saving && currentAction === 'schedule' ? '设置中...' : '定时发布' }}
-          </button>
-          <button 
-            @click="onPublish" 
-            :disabled="!canSubmit || saving" 
-            class="btn-primary"
-          >
-            {{ saving && currentAction === 'publish' ? '发布中...' : (isEdit ? '更新文章' : '发布文章') }}
-          </button>
+        <div class="publish-footer flex flex-wrap items-center justify-between gap-3">
+          <div v-if="showValidation && validationSummary.length" class="footer-validation-tip">
+            共发现 {{ validationSummary.length }} 处需要修正的内容，请按字段提示逐项检查。
+          </div>
+          <div class="publish-footer-actions flex flex-wrap justify-end gap-3">
+            <button class="btn-secondary" :disabled="saving" @click="onSaveDraft">
+              {{ saving && currentAction === 'draft' ? '保存中...' : '保存草稿' }}
+            </button>
+            <button
+              v-if="meta.schedule"
+              class="btn-warning"
+              :disabled="saving"
+              @click="onSchedule"
+            >
+              {{ saving && currentAction === 'schedule' ? '设置中...' : '定时发布' }}
+            </button>
+            <button class="btn-primary" :disabled="saving" @click="onPublish">
+              {{ saving && currentAction === 'publish' ? '发布中...' : (isEdit ? '更新文章' : '发布文章') }}
+            </button>
+          </div>
         </div>
       </template>
     </Card>
 
-    <!-- 新增分类弹窗 -->
-    <div v-if="showAddCategory" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <Card class="w-96">
+    <div
+      v-if="showAddCategory"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      @click.self="showAddCategory = false"
+    >
+      <Card class="w-96 max-w-[calc(100vw-2rem)]">
         <template #header>
           <div class="flex items-center justify-between w-full">
             <h3 class="text-lg font-semibold">新增分类</h3>
-            <button @click="showAddCategory = false" class="text-gray-400 hover:text-gray-600">×</button>
+            <button class="text-gray-400 hover:text-gray-600" @click="showAddCategory = false">
+              ×
+            </button>
           </div>
         </template>
-        
+
         <div class="space-y-4">
-          <input v-model="newCategoryName" class="input" placeholder="请输入分类名称" />
+          <input
+            v-model="newCategoryName"
+            class="input"
+            placeholder="请输入分类名称"
+          />
         </div>
-        
+
         <template #footer>
           <div class="flex justify-end gap-2">
             <button class="btn-secondary" @click="showAddCategory = false">取消</button>
-            <button class="btn-primary" @click="handleAddCategory" :disabled="!newCategoryName">保存</button>
+            <button
+              class="btn-primary"
+              :disabled="!newCategoryName.trim()"
+              @click="handleAddCategory"
+            >
+              保存
+            </button>
           </div>
         </template>
       </Card>
     </div>
 
-    <!-- 新增标签弹窗 -->
-    <div v-if="showAddTag" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <Card class="w-96">
+    <div
+      v-if="showAddTag"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      @click.self="showAddTag = false"
+    >
+      <Card class="w-96 max-w-[calc(100vw-2rem)]">
         <template #header>
           <div class="flex items-center justify-between w-full">
             <h3 class="text-lg font-semibold">新增标签</h3>
-            <button @click="showAddTag = false" class="text-gray-400 hover:text-gray-600">×</button>
+            <button class="text-gray-400 hover:text-gray-600" @click="showAddTag = false">
+              ×
+            </button>
           </div>
         </template>
-        
+
         <div class="space-y-4">
-          <input v-model="newTagName" class="input" placeholder="请输入标签名称" />
+          <input
+            v-model="newTagName"
+            class="input"
+            placeholder="请输入标签名称"
+          />
         </div>
-        
+
         <template #footer>
           <div class="flex justify-end gap-2">
             <button class="btn-secondary" @click="showAddTag = false">取消</button>
-            <button class="btn-primary" @click="handleAddTag" :disabled="!newTagName">保存</button>
+            <button class="btn-primary" :disabled="!newTagName.trim()" @click="handleAddTag">
+              保存
+            </button>
           </div>
         </template>
       </Card>
@@ -281,46 +341,43 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useMessageStore } from '@/store/user'
-
-// 组件导入
+import AppSelect from '@/components/AppSelect.vue'
 import Card from '@/components/Card.vue'
 import LoadingState from '@/components/LoadingState.vue'
-const VditorEditor = defineAsyncComponent(() => import('@/components/VditorEditor.vue'))
+import { createArticle, updateArticle } from '@/api/article'
+import { addCategory, getCategories } from '@/api/category'
+import { addTag, getTags } from '@/api/tag'
 
-// API导入
-import { getTags, addTag } from '@/api/tag'
-import { getCategories, addCategory } from '@/api/category'
-import { createArticle, updateArticle, getArticle } from '@/api/article'
-// 移除全局编辑器 Token 请求头注入，避免更新文章时误参与附件同步
+const VditorEditor = defineAsyncComponent(() => import('@/components/VditorEditor.vue'))
 
 const router = useRouter()
 const { t } = useI18n()
 const messageStore = useMessageStore()
 
-// 表单数据
+const coverInput = ref(null)
 const title = ref('')
 const content = ref('')
-// 已移除 contentJSON，后端不再支持结构化字段
 const meta = ref({
   tags: [],
   categories: [],
   summary: '',
   cover: '',
   visibility: 'public',
-  schedule: null,
+  schedule: '',
 })
 
-// 选项数据
 const tagOptions = ref([])
 const categoryOptions = ref([])
-const selectedTag = ref('')
-const selectedCategory = ref('')
+const visibilityOptions = [
+  { label: '公开', value: 'public' },
+  { label: '私密', value: 'private' },
+  { label: '密码保护', value: 'password' },
+]
 
-// 状态管理
 const saving = ref(false)
 const currentAction = ref('')
 const showValidation = ref(false)
@@ -328,261 +385,357 @@ const isEdit = ref(false)
 const editArticleId = ref(null)
 const editorToken = ref('')
 
-// 验证错误状态
-const validationErrors = ref({
-  title: '',
-  summary: '',
-  categories: '',
-  tags: '',
-  content: ''
-})
-
-// 弹窗状态
 const showAddCategory = ref(false)
 const showAddTag = ref(false)
 const newCategoryName = ref('')
 const newTagName = ref('')
 
-// 计算属性
-const canSubmit = computed(() => {
-  return title.value && 
-         meta.value.summary && 
-         meta.value.tags.length && 
-         meta.value.categories.length &&
-         content.value.trim().length > 0
+const validationErrors = ref({
+  title: '',
+  summary: '',
+  categories: '',
+  tags: '',
+  content: '',
 })
 
-// 验证函数
-function validateForm() {
-  validationErrors.value = {
-    title: '',
-    summary: '',
-    categories: '',
-    tags: '',
-    content: ''
-  }
-  
-  let isValid = true
-  
-  if (!title.value || title.value.trim().length < 5) {
-    validationErrors.value.title = '标题至少需要5个字符'
-    isValid = false
-  } else if (title.value.trim().length > 100) {
-    validationErrors.value.title = '标题不能超过100个字符'
-    isValid = false
-  }
-  
-  if (!meta.value.summary || meta.value.summary.trim().length < 10) {
-    validationErrors.value.summary = '摘要至少需要10个字符'
-    isValid = false
-  } else if (meta.value.summary.trim().length > 500) {
-    validationErrors.value.summary = '摘要不能超过500个字符'
-    isValid = false
-  }
-  
-  if (!meta.value.categories.length) {
-    validationErrors.value.categories = '请至少选择一个分类'
-    isValid = false
-  }
-  
-  if (!meta.value.tags.length) {
-    validationErrors.value.tags = '请至少选择一个标签'
-    isValid = false
-  }
-  
-  if (!content.value || content.value.trim().length < 50) {
-    validationErrors.value.content = '文章内容至少需要50个字符'
-    isValid = false
-  }
-  
-  return isValid
+const validationFieldOrder = ['title', 'summary', 'categories', 'tags', 'content']
+const validationFieldLabels = {
+  title: '文章标题',
+  summary: '文章摘要',
+  categories: '文章分类',
+  tags: '文章标签',
+  content: '文章内容',
+}
+const validationFieldSelectors = {
+  title: '[data-field="title"] .input',
+  summary: '[data-field="summary"] .input',
+  categories: '[data-field="categories"] .app-select-trigger',
+  tags: '[data-field="tags"] .app-select-trigger',
+  content: '[data-field="content"] .vditor, [data-field="content"] textarea, [data-field="content"] [contenteditable="true"]',
 }
 
-// 初始化
+const feedbackCooldownMs = 1200
+let lastValidationFeedbackAt = 0
+let ensurePostIdPromise = null
+
+const validationSummary = computed(() => {
+  return validationFieldOrder
+    .filter((field) => validationErrors.value[field])
+    .map((field) => ({
+      field,
+      label: validationFieldLabels[field],
+      message: validationErrors.value[field],
+    }))
+})
+
+const firstInvalidField = computed(() => validationSummary.value[0]?.field || '')
+const scheduleMin = computed(() => toDateTimeLocalValue(new Date()))
+
 onMounted(async () => {
   try {
-    // 初始化 editorToken（一次会话一个），仅用于上传接口的 formData 字段
-    editorToken.value = localStorage.getItem('editorToken') || `ed_${Date.now()}_${Math.random().toString(36).slice(2,8)}`
+    editorToken.value =
+      localStorage.getItem('editorToken') ||
+      `ed_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
     localStorage.setItem('editorToken', editorToken.value)
-    // 检查是否有编辑数据
+
     const editData = localStorage.getItem('editArticleData')
     if (editData) {
-      isEdit.value = true
-      const articleData = JSON.parse(editData)
-      editArticleId.value = articleData.ArticleID || articleData.PostID
-      
-      // 填充表单数据
-      title.value = articleData.Title || ''
-      content.value = articleData.Content || ''
-      meta.value.summary = articleData.Excerpt || ''
-      meta.value.cover = articleData.FeaturedImage || ''
-      meta.value.visibility = articleData.Visibility || 'public'
-      meta.value.schedule = articleData.Schedule || null
-      
-      if (articleData.Categories && Array.isArray(articleData.Categories)) {
-        meta.value.categories = articleData.Categories.map(cat => cat.CategoryID)
-      }
-      if (articleData.Tags && Array.isArray(articleData.Tags)) {
-        meta.value.tags = articleData.Tags.map(tag => tag.TagID)
-      }
-      
-      // 清除localStorage中的编辑数据
+      hydrateEditArticle(JSON.parse(editData))
       localStorage.removeItem('editArticleData')
     }
-    
-    // 获取标签和分类
-    const [tagsRes, categoriesRes] = await Promise.all([
-      getTags(),
-      getCategories()
-    ])
-    tagOptions.value = tagsRes.data || tagsRes || []
-    categoryOptions.value = categoriesRes.data || categoriesRes || []
+
+    await loadOptions()
   } catch (error) {
     console.error('获取标签或分类失败:', error)
     messageStore.show('获取标签或分类失败', 'error')
   }
 })
 
-onUnmounted(() => {})
+watch(title, () => {
+  if (showValidation.value || validationErrors.value.title) {
+    validateField('title')
+  }
+})
 
-// 工具函数
-function getCategoryName(id) {
-  const category = categoryOptions.value.find(c => c.CategoryID === id)
-  return category?.Name || '未知分类'
+watch(
+  () => meta.value.summary,
+  () => {
+    if (showValidation.value || validationErrors.value.summary) {
+      validateField('summary')
+    }
+  },
+)
+
+watch(
+  () => meta.value.categories.length,
+  () => {
+    if (showValidation.value || validationErrors.value.categories) {
+      validateField('categories')
+    }
+  },
+)
+
+watch(
+  () => meta.value.tags.length,
+  () => {
+    if (showValidation.value || validationErrors.value.tags) {
+      validateField('tags')
+    }
+  },
+)
+
+watch(content, () => {
+  if (showValidation.value || validationErrors.value.content) {
+    validateField('content')
+  }
+})
+
+function hydrateEditArticle(articleData) {
+  isEdit.value = true
+  editArticleId.value = articleData.ArticleID || articleData.PostID || null
+  title.value = articleData.Title || ''
+  content.value = articleData.Content || ''
+  meta.value.summary = articleData.Excerpt || ''
+  meta.value.cover = articleData.FeaturedImageURL || articleData.FeaturedImage || ''
+  meta.value.visibility = articleData.Visibility || 'public'
+  meta.value.schedule = toDateTimeLocalValue(
+    articleData.Schedule || articleData.ScheduledAt || '',
+  )
+  meta.value.categories = Array.isArray(articleData.Categories)
+    ? articleData.Categories.map((item) => item.CategoryID).filter(Boolean)
+    : []
+  meta.value.tags = Array.isArray(articleData.Tags)
+    ? articleData.Tags.map((item) => item.TagID).filter(Boolean)
+    : []
 }
 
-function getTagName(id) {
-  const tag = tagOptions.value.find(t => t.TagID === id)
-  return tag?.Name || '未知标签'
+async function loadOptions() {
+  const [tagsRes, categoriesRes] = await Promise.all([getTags(), getCategories()])
+  tagOptions.value = normalizeListResponse(tagsRes)
+  categoryOptions.value = normalizeListResponse(categoriesRes)
 }
 
-function slugify(str) {
-  return str.toString().toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '')
-    .slice(0, 50) || Math.random().toString(36).slice(2, 10)
+function normalizeListResponse(response) {
+  const payload = unwrapResponse(response)
+  if (Array.isArray(payload)) return payload
+  if (Array.isArray(payload?.list)) return payload.list
+  return []
 }
 
-// 字段验证
+function unwrapResponse(response) {
+  return response?.data?.data ?? response?.data ?? response
+}
+
+function validateForm() {
+  showValidation.value = true
+  validationErrors.value = {
+    title: '',
+    summary: '',
+    categories: '',
+    tags: '',
+    content: '',
+  }
+
+  let isValid = true
+
+  if (!title.value || title.value.trim().length < 5) {
+    validationErrors.value.title = '标题至少需要 5 个字符'
+    isValid = false
+  } else if (title.value.trim().length > 100) {
+    validationErrors.value.title = '标题不能超过 100 个字符'
+    isValid = false
+  }
+
+  if (!meta.value.summary || meta.value.summary.trim().length < 10) {
+    validationErrors.value.summary = '摘要至少需要 10 个字符'
+    isValid = false
+  } else if (meta.value.summary.trim().length > 500) {
+    validationErrors.value.summary = '摘要不能超过 500 个字符'
+    isValid = false
+  }
+
+  if (!meta.value.categories.length) {
+    validationErrors.value.categories = '请至少选择一个分类'
+    isValid = false
+  }
+
+  if (!meta.value.tags.length) {
+    validationErrors.value.tags = '请至少选择一个标签'
+    isValid = false
+  }
+
+  if (!content.value || content.value.trim().length < 50) {
+    validationErrors.value.content = '文章内容至少需要 50 个字符'
+    isValid = false
+  }
+
+  return isValid
+}
+
 function validateField(field) {
   switch (field) {
     case 'title':
       if (!title.value || title.value.trim().length < 5) {
-        validationErrors.value.title = '标题至少需要5个字符'
+        validationErrors.value.title = '标题至少需要 5 个字符'
       } else if (title.value.trim().length > 100) {
-        validationErrors.value.title = '标题不能超过100个字符'
+        validationErrors.value.title = '标题不能超过 100 个字符'
       } else {
         validationErrors.value.title = ''
       }
       break
     case 'summary':
       if (!meta.value.summary || meta.value.summary.trim().length < 10) {
-        validationErrors.value.summary = '摘要至少需要10个字符'
+        validationErrors.value.summary = '摘要至少需要 10 个字符'
       } else if (meta.value.summary.trim().length > 500) {
-        validationErrors.value.summary = '摘要不能超过500个字符'
+        validationErrors.value.summary = '摘要不能超过 500 个字符'
       } else {
         validationErrors.value.summary = ''
       }
       break
+    case 'categories':
+      validationErrors.value.categories = meta.value.categories.length
+        ? ''
+        : '请至少选择一个分类'
+      break
+    case 'tags':
+      validationErrors.value.tags = meta.value.tags.length
+        ? ''
+        : '请至少选择一个标签'
+      break
+    case 'content':
+      validationErrors.value.content =
+        content.value && content.value.trim().length >= 50
+          ? ''
+          : '文章内容至少需要 50 个字符'
+      break
+    default:
+      break
   }
 }
 
-// 分类和标签操作
-function onCategoryChange() {
-  if (selectedCategory.value && !meta.value.categories.includes(selectedCategory.value)) {
-    meta.value.categories.push(selectedCategory.value)
-    validationErrors.value.categories = '' // 清除验证错误
-  }
-  selectedCategory.value = ''
+function buildValidationMessage() {
+  const firstError = validationSummary.value[0]
+  if (!firstError) return '请检查表单填写是否正确'
+
+  return `请先修正 ${validationSummary.value.length} 处内容：${firstError.label}${
+    firstError.message ? `，${firstError.message}` : ''
+  }`
 }
 
-function removeCategory(id) {
-  const index = meta.value.categories.indexOf(id)
-  if (index > -1) {
-    meta.value.categories.splice(index, 1)
+function notifyValidationFailure(message = buildValidationMessage()) {
+  const now = Date.now()
+  if (now - lastValidationFeedbackAt >= feedbackCooldownMs) {
+    lastValidationFeedbackAt = now
+    messageStore.show(message, 'error')
   }
+
+  focusFirstInvalidField()
 }
 
-function onTagChange() {
-  if (selectedTag.value && !meta.value.tags.includes(selectedTag.value)) {
-    meta.value.tags.push(selectedTag.value)
-    validationErrors.value.tags = '' // 清除验证错误
-  }
-  selectedTag.value = ''
+function focusFirstInvalidField() {
+  nextTick(() => {
+    const selector = validationFieldSelectors[firstInvalidField.value]
+    if (!selector) return
+
+    const target = document.querySelector(selector)
+    if (!target) return
+
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (typeof target.focus === 'function') {
+      target.focus({ preventScroll: true })
+    }
+  })
 }
 
-function removeTag(id) {
-  const index = meta.value.tags.indexOf(id)
-  if (index > -1) {
-    meta.value.tags.splice(index, 1)
-  }
+function openCoverPicker() {
+  coverInput.value?.click()
 }
 
-// 封面图片处理
-function onCoverChange(e) {
-  const file = e.target.files[0]
+function onCoverChange(event) {
+  const input = event.target
+  const file = input?.files?.[0]
   if (!file) return
-  
+
   const reader = new FileReader()
-  reader.onload = (ev) => {
-    meta.value.cover = ev.target.result
+  reader.onload = (loadEvent) => {
+    meta.value.cover = loadEvent.target?.result || ''
+    if (input) {
+      input.value = ''
+    }
   }
   reader.readAsDataURL(file)
 }
 
-// 发布操作
+function slugify(value) {
+  return value
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '')
+    .slice(0, 50) || Math.random().toString(36).slice(2, 10)
+}
+
+function buildArticlePayload(status, extra = {}) {
+  const safeTitle = title.value?.trim() || '无标题草稿'
+  return {
+    title: safeTitle,
+    slug: slugify(safeTitle),
+    content: content.value,
+    excerpt: meta.value.summary,
+    status,
+    categoryIds: [...meta.value.categories],
+    tagIds: [...meta.value.tags],
+    featuredImageURL: meta.value.cover,
+    visibility: meta.value.visibility,
+    ...extra,
+  }
+}
+
+async function persistArticle(payload) {
+  if (isEdit.value && editArticleId.value) {
+    return updateArticle(editArticleId.value, payload)
+  }
+
+  return createArticle(payload)
+}
+
 async function onPublish() {
+  if (saving.value) return
+
   if (!validateForm()) {
-    messageStore.show('请检查表单填写是否正确', 'error')
+    notifyValidationFailure()
     return
   }
-  
+
   saving.value = true
   currentAction.value = 'publish'
-  
+
   try {
-    const payload = {
-      title: title.value,
-      slug: slugify(title.value),
-      content: content.value,
-      
-      excerpt: meta.value.summary,
-      status: 'published',
-      categoryIds: meta.value.categories,
-      tagIds: meta.value.tags,
-      featuredImageURL: meta.value.cover,
-      visibility: meta.value.visibility,
-    }
-    
-    let res
-    if (isEdit.value && editArticleId.value) {
-      res = await updateArticle(editArticleId.value, payload)
-      if (res.code === 0) {
-        messageStore.show(t('articleUpdateSuccess'), 'success')
-      } else {
-        messageStore.show(res.message || t('articleUpdateFail'), 'error')
-      }
-    } else {
-      res = await createArticle(payload)
-      if (res.code === 0) {
-        messageStore.show(t('articleCreateSuccess'), 'success')
-      } else {
-        messageStore.show(res.message || t('articleCreateFail'), 'error')
-      }
-    }
-    
-    if (res.code === 0) {
+    const response = await persistArticle(buildArticlePayload('published'))
+    if (response.code === 0) {
+      messageStore.show(
+        isEdit.value ? t('articleUpdateSuccess') : t('articleCreateSuccess'),
+        'success',
+      )
       setTimeout(() => {
         router.push('/admin/articles')
       }, 1500)
+    } else {
+      messageStore.show(
+        response.message ||
+          (isEdit.value ? t('articleUpdateFail') : t('articleCreateFail')),
+        'error',
+      )
     }
   } catch (error) {
-    console.error('发布失败:', error)
-    const message = isEdit.value ? t('articleUpdateFail') : t('articleCreateFail')
-    messageStore.show(message, 'error')
+    console.error('发布文章失败:', error)
+    messageStore.show(
+      isEdit.value ? t('articleUpdateFail') : t('articleCreateFail'),
+      'error',
+    )
   } finally {
     saving.value = false
     currentAction.value = ''
@@ -590,39 +743,24 @@ async function onPublish() {
 }
 
 async function onSaveDraft() {
-  if (!title.value) {
-    messageStore.show(t('articleTitleRequired'), 'error')
+  if (saving.value) return
+
+  if (!title.value.trim()) {
+    showValidation.value = true
+    validationErrors.value.title = '保存草稿至少需要填写文章标题'
+    notifyValidationFailure('保存草稿至少需要填写文章标题')
     return
   }
-  
+
   saving.value = true
   currentAction.value = 'draft'
-  
+
   try {
-    const payload = {
-      title: title.value || '无标题草稿',
-      slug: title.value ? slugify(title.value) : `draft-${Date.now()}`,
-      content: content.value,
-      
-      excerpt: meta.value.summary,
-      status: 'draft',
-      categoryIds: meta.value.categories,
-      tagIds: meta.value.tags,
-      featuredImageURL: meta.value.cover,
-      visibility: meta.value.visibility,
-    }
-    
-    let res
-    if (isEdit.value && editArticleId.value) {
-      res = await updateArticle(editArticleId.value, payload)
-    } else {
-      res = await createArticle(payload)
-    }
-    
-    if (res.code === 0) {
+    const response = await persistArticle(buildArticlePayload('draft'))
+    if (response.code === 0) {
       messageStore.show(t('saveSuccess'), 'success')
     } else {
-      messageStore.show(res.message || t('saveFail'), 'error')
+      messageStore.show(response.message || t('saveFail'), 'error')
     }
   } catch (error) {
     console.error('保存草稿失败:', error)
@@ -634,229 +772,385 @@ async function onSaveDraft() {
 }
 
 async function onSchedule() {
+  if (saving.value) return
+
   if (!validateForm()) {
-    messageStore.show('请检查表单填写是否正确', 'error')
+    notifyValidationFailure()
     return
   }
+
   if (!meta.value.schedule) {
-    messageStore.show('请设置定时发布时间', 'error')
+    messageStore.show('请先设置定时发布时间', 'error')
     return
   }
-  
+
   saving.value = true
   currentAction.value = 'schedule'
-  
+
   try {
-    const payload = {
-      title: title.value,
-      slug: slugify(title.value),
-      content: content.value,
-      
-      excerpt: meta.value.summary,
-      status: 'scheduled',
-      categoryIds: meta.value.categories,
-      tagIds: meta.value.tags,
-      featuredImageURL: meta.value.cover,
-      schedule: meta.value.schedule,
-      visibility: meta.value.visibility,
-    }
-    
-    let res
-    if (isEdit.value && editArticleId.value) {
-      res = await updateArticle(editArticleId.value, payload)
-    } else {
-      res = await createArticle(payload)
-    }
-    
-    if (res.code === 0) {
+    const response = await persistArticle(
+      buildArticlePayload('scheduled', {
+        schedule: meta.value.schedule,
+      }),
+    )
+
+    if (response.code === 0) {
       messageStore.show('定时发布设置成功', 'success')
       setTimeout(() => {
         router.push('/admin/articles')
       }, 1500)
     } else {
-      messageStore.show(res.message || '设置失败', 'error')
+      messageStore.show(response.message || '定时发布设置失败', 'error')
     }
   } catch (error) {
     console.error('定时发布设置失败:', error)
-    messageStore.show('设置失败，请重试', 'error')
+    messageStore.show('定时发布设置失败，请稍后重试', 'error')
   } finally {
     saving.value = false
     currentAction.value = ''
   }
 }
 
-// 新增分类
 async function handleAddCategory() {
-  if (!newCategoryName.value) return
-  
+  const trimmedName = newCategoryName.value.trim()
+  if (!trimmedName) return
+
   try {
-    const res = await addCategory({ name: newCategoryName.value })
-    if (res.code === 0) {
-      showAddCategory.value = false
-      newCategoryName.value = ''
-      
-      // 重新拉取分类并选中新建项
-      const categoriesRes = await getCategories()
-      categoryOptions.value = categoriesRes.data || categoriesRes || []
-      const newCat = categoryOptions.value.find(c => c.Name === res.data?.Name)
-      if (newCat) {
-        meta.value.categories.push(newCat.CategoryID)
-      }
-      messageStore.show('新增分类成功', 'success')
-    } else {
-      messageStore.show(res.message || '新增失败', 'error')
+    const response = await addCategory({ name: trimmedName })
+    if (response.code !== 0) {
+      messageStore.show(response.message || '新增分类失败', 'error')
+      return
     }
-  } catch (e) {
-    messageStore.show('新增失败', 'error')
+
+    const createdCategory = unwrapResponse(response)
+    showAddCategory.value = false
+    newCategoryName.value = ''
+
+    const categoryResponse = await getCategories()
+    categoryOptions.value = normalizeListResponse(categoryResponse)
+
+    const matchedCategory = categoryOptions.value.find(
+      (item) => item.Name === (createdCategory?.Name || trimmedName),
+    )
+    if (matchedCategory && !meta.value.categories.includes(matchedCategory.CategoryID)) {
+      meta.value.categories.push(matchedCategory.CategoryID)
+    }
+
+    validateField('categories')
+    messageStore.show('新增分类成功', 'success')
+  } catch (error) {
+    console.error('新增分类失败:', error)
+    messageStore.show('新增分类失败', 'error')
   }
 }
 
-// 新增标签
 async function handleAddTag() {
-  if (!newTagName.value) return
-  
+  const trimmedName = newTagName.value.trim()
+  if (!trimmedName) return
+
   try {
-    const res = await addTag({ name: newTagName.value })
-    if (res.code === 0) {
-      showAddTag.value = false
-      newTagName.value = ''
-      
-      // 重新拉取标签并选中新建项
-      const tagsRes = await getTags()
-      tagOptions.value = tagsRes.data || tagsRes || []
-      const newTag = tagOptions.value.find(t => t.Name === res.data?.Name)
-      if (newTag) {
-        meta.value.tags.push(newTag.TagID)
-      }
-      messageStore.show('新增标签成功', 'success')
-    } else {
-      messageStore.show(res.message || '新增失败', 'error')
+    const response = await addTag({ name: trimmedName })
+    if (response.code !== 0) {
+      messageStore.show(response.message || '新增标签失败', 'error')
+      return
     }
-  } catch (e) {
-    messageStore.show('新增失败', 'error')
+
+    const createdTag = unwrapResponse(response)
+    showAddTag.value = false
+    newTagName.value = ''
+
+    const tagResponse = await getTags()
+    tagOptions.value = normalizeListResponse(tagResponse)
+
+    const matchedTag = tagOptions.value.find(
+      (item) => item.Name === (createdTag?.Name || trimmedName),
+    )
+    if (matchedTag && !meta.value.tags.includes(matchedTag.TagID)) {
+      meta.value.tags.push(matchedTag.TagID)
+    }
+
+    validateField('tags')
+    messageStore.show('新增标签成功', 'success')
+  } catch (error) {
+    console.error('新增标签失败:', error)
+    messageStore.show('新增标签失败', 'error')
   }
 }
 
-// 通知透传给全局消息
 function onNotify(payload) {
   const { type, message } = payload || {}
   if (!type || !message) return
   messageStore.show(message, type)
 }
 
-// 确保拿到 PostID：
-// - 编辑场景：用已有 editArticleId
-// - 新建场景：若无，则先创建一个最小草稿，拿到 PostID 供图片上传
-let ensurePostIdPromise = null
 async function ensurePostId() {
   if (editArticleId.value) return editArticleId.value
   if (ensurePostIdPromise) return ensurePostIdPromise
+
   ensurePostIdPromise = (async () => {
-    const tmpTitle = title.value?.trim() || '未命名文章'
-    const payload = {
-      // 最小化草稿载荷，避免 data:image 进入正文导致 500 或超限
-      title: tmpTitle,
-      slug: slugify(tmpTitle),
-      // 后端要求 content 非空，这里用极小占位符，后续会被真实内容覆盖
+    const draftTitle = title.value?.trim() || '未命名文章'
+    const payload = buildArticlePayload('draft', {
+      title: draftTitle,
+      slug: slugify(draftTitle),
       content: '草稿占位',
-      status: 'draft',
-      // 若后端也校验 excerpt，可按需放开
-      // excerpt: '占位'
-    }
+    })
+
     try {
-      const res = await createArticle(payload)
-      const data = res?.data?.data || res?.data || res
-      const id = data.PostID || data.ArticleID || data.id
+      const response = await createArticle(payload)
+      const data = unwrapResponse(response)
+      const id = data?.PostID || data?.ArticleID || data?.id || null
+
       if (id) {
         editArticleId.value = id
         isEdit.value = true
         return id
       }
-    } catch (e) {
-      // 失败则回退：提示用户无法自动创建草稿
-      messageStore.show('自动创建草稿失败，无法上传图片', 'error')
-      throw e
+    } catch (error) {
+      messageStore.show('自动创建草稿失败，当前无法上传图片', 'error')
+      throw error
     } finally {
       ensurePostIdPromise = null
     }
-    throw new Error('未能获取文章ID')
+
+    throw new Error('未能获取文章 ID')
   })()
+
   return ensurePostIdPromise
+}
+
+function toDateTimeLocalValue(value) {
+  if (!value) return ''
+
+  const date =
+    value instanceof Date
+      ? value
+      : new Date(String(value).replace(' ', 'T'))
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return localDate.toISOString().slice(0, 16)
 }
 </script>
 
 <style scoped>
+.validation-alert {
+  border: 1px solid rgba(255, 147, 183, 0.28);
+  border-radius: 18px;
+  padding: 14px 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 147, 183, 0.12), rgba(120, 163, 255, 0.08));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 14px 36px rgba(8, 12, 24, 0.16);
+}
+
+.validation-alert-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffd2df;
+  margin-bottom: 8px;
+}
+
+.validation-alert-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.validation-alert-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #f6dbe6;
+  font-size: 0.875rem;
+}
+
+.validation-alert-label {
+  color: #ffc0d3;
+  font-weight: 600;
+}
+
+.field-block {
+  position: relative;
+  transition: transform 180ms ease;
+}
+
+.field-block-error {
+  transform: translateY(-1px);
+}
+
+.field-hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.field-error {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #ffb1c8;
+}
+
 .input {
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.875rem;
   width: 100%;
   outline: none;
-  transition: all 0.15s;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.18s ease;
+}
+
+.input::placeholder {
+  color: var(--muted);
 }
 
 .input:focus {
-  box-shadow: 0 0 0 2px #3b82f6;
+  box-shadow: 0 0 0 3px rgba(120, 163, 255, 0.18);
   border-color: transparent;
 }
 
-.btn-primary {
-  background-color: #2563eb;
-  color: white;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-weight: 500;
-  transition: background-color 0.15s;
-  border: none;
+.field-block-error .input,
+.field-block-error :deep(.vditor),
+.field-block-error :deep(.app-select-trigger) {
+  border-color: rgba(255, 147, 183, 0.45) !important;
+  box-shadow:
+    0 0 0 3px rgba(255, 147, 183, 0.14),
+    0 18px 40px rgba(255, 147, 183, 0.08) !important;
+}
+
+.field-block-error label {
+  color: #ffd4df !important;
+}
+
+.editor-card-error {
+  border-color: rgba(255, 147, 183, 0.28);
+}
+
+.editor-card-error :deep(.vditor-toolbar) {
+  border-bottom-color: rgba(255, 147, 183, 0.18) !important;
+}
+
+.footer-validation-tip {
+  max-width: min(100%, 420px);
+  color: #ffd4df;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-warning {
+  border-radius: 14px;
+  padding: 0.625rem 1.1rem;
+  font-weight: 600;
+  border: 1px solid transparent;
   cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    opacity 180ms ease;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled),
+.btn-warning:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-warning:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, rgba(120, 163, 255, 0.92), rgba(255, 123, 176, 0.78));
+  color: #fff;
+  box-shadow:
+    0 14px 32px rgba(120, 163, 255, 0.24),
+    0 0 22px rgba(120, 163, 255, 0.18);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #1d4ed8;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  box-shadow:
+    0 18px 40px rgba(120, 163, 255, 0.3),
+    0 0 28px rgba(255, 123, 176, 0.14);
 }
 
 .btn-secondary {
-  background-color: #6b7280;
-  color: white;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-weight: 500;
-  transition: background-color 0.15s;
-  border: none;
-  cursor: pointer;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #4b5563;
-}
-
-.btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+  box-shadow:
+    0 14px 32px rgba(8, 12, 24, 0.24),
+    0 0 18px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .btn-warning {
-  background-color: #eab308;
-  color: white;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-weight: 500;
-  transition: background-color 0.15s;
-  border: none;
-  cursor: pointer;
+  background: linear-gradient(135deg, rgba(255, 211, 110, 0.9), rgba(255, 152, 107, 0.78));
+  color: #221202;
+  box-shadow: 0 14px 32px rgba(255, 179, 82, 0.22);
 }
 
 .btn-warning:hover:not(:disabled) {
-  background-color: #ca8a04;
+  box-shadow: 0 18px 40px rgba(255, 179, 82, 0.28);
 }
 
-.btn-warning:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+@media (max-width: 1024px) {
+  .publish-footer {
+    align-items: stretch;
+  }
+
+  .publish-footer-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .publish-footer-actions > * {
+    flex: 1 1 180px;
+  }
+}
+
+@media (max-width: 640px) {
+  .publish-page {
+    padding-inline: 0;
+  }
+
+  .footer-validation-tip {
+    max-width: 100%;
+  }
+
+  .publish-footer-actions > * {
+    width: 100%;
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .publish-page {
+    padding-top: 0.5rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .publish-footer {
+    gap: 0.75rem;
+  }
 }
 </style>

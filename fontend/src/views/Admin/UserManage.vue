@@ -1,1059 +1,1461 @@
 <template>
-  <div class="w-full min-h-screen p-0 m-0">
-    <!-- 顶部操作栏 -->
-    <div class="w-full flex items-center bg-white border-b px-6 py-4">
-      <h2 class="text-2xl font-bold text-blue-700 flex-1">用户管理</h2>
-      <div class="flex gap-2">
-        <button class="btn-primary" @click="onAdd">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-          </svg>
-          新增用户
-        </button>
+  <div class="user-manage">
+    <section class="hero-panel">
+      <div>
+        <span class="panel-kicker">Admin Control</span>
+        <h1>用户与会话管理</h1>
+        <p>管理员可以查看在线状态、活跃会话数，强制用户下线，并对账号状态与角色进行维护。</p>
       </div>
-    </div>
 
-    <!-- 统计卡片区 -->
-    <div class="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 p-6">
-      <div class="bg-white rounded-xl shadow p-6 border flex flex-col items-center">
-        <div class="text-3xl font-bold text-blue-600 mb-2">{{ statistics.totalUsers || 0 }}</div>
-        <div class="text-gray-500">总用户数</div>
+      <div class="hero-actions">
+        <button class="btn-secondary" @click="fetchAll">刷新数据</button>
+        <button class="btn-primary" @click="openCreateForm">新建用户</button>
       </div>
-      <div class="bg-white rounded-xl shadow p-6 border flex flex-col items-center">
-        <div class="text-3xl font-bold text-green-600 mb-2">{{ statistics.activeUsers || 0 }}</div>
-        <div class="text-gray-500">活跃用户</div>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6 border flex flex-col items-center">
-        <div class="text-3xl font-bold text-orange-600 mb-2">{{ statistics.newUsersToday || 0 }}</div>
-        <div class="text-gray-500">今日新增</div>
-      </div>
-      <div class="bg-white rounded-xl shadow p-6 border flex flex-col items-center">
-        <div class="text-3xl font-bold text-purple-600 mb-2">{{ statistics.newUsersThisMonth || 0 }}</div>
-        <div class="text-gray-500">本月新增</div>
-      </div>
-    </div>
+    </section>
 
-    <!-- 搜索和筛选区 -->
-    <div class="w-full bg-white rounded-xl shadow p-6 border mt-6">
-      <div class="flex flex-wrap gap-4 items-center">
-        <div class="flex-1 min-w-64">
-          <input 
-            v-model="keyword" 
-            placeholder="搜索用户名、邮箱、显示名称..." 
-            class="input w-full"
-            @input="onSearch"
-          />
-        </div>
-        <select v-model="statusFilter" @change="onSearch" class="input w-32">
-          <option value="">全部状态</option>
-          <option value="active">启用</option>
-          <option value="inactive">禁用</option>
-        </select>
-        <select v-model="roleFilter" @change="onSearch" class="input w-32">
-          <option value="">全部角色</option>
-          <option v-for="role in allRoles" :key="role.RoleID" :value="role.RoleID">
-            {{ role.Name }}
-          </option>
-        </select>
-        <button @click="onSearch" class="btn-primary">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-          搜索
-        </button>
-        <button @click="resetFilters" class="btn-secondary">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-          重置
-        </button>
-      </div>
-    </div>
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span>用户总数</span>
+        <strong>{{ statistics.total }}</strong>
+      </article>
+      <article class="stat-card">
+        <span>启用账号</span>
+        <strong>{{ statistics.enabled }}</strong>
+      </article>
+      <article class="stat-card">
+        <span>在线用户</span>
+        <strong>{{ statistics.online }}</strong>
+      </article>
+      <article class="stat-card">
+        <span>今日新增</span>
+        <strong>{{ statistics.today }}</strong>
+      </article>
+    </section>
 
-    <!-- 批量操作栏 -->
-    <div v-if="selectedUsers.length > 0" class="w-full bg-blue-50 rounded-xl p-4 mt-4 flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <span class="text-blue-700 font-medium">已选择 {{ selectedUsers.length }} 个用户</span>
-        <button @click="clearSelection" class="text-blue-600 hover:text-blue-800 text-sm">清除选择</button>
-      </div>
-      <div class="flex gap-2">
-        <button @click="batchEnable" class="btn-sm btn-success">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-          </svg>
-          批量启用
-        </button>
-        <button @click="batchDisable" class="btn-sm btn-warning">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"></path>
-          </svg>
-          批量禁用
-        </button>
-        <button @click="batchDelete" class="btn-sm btn-danger">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-          </svg>
-          批量删除
-        </button>
-      </div>
-    </div>
+    <section class="filter-panel">
+      <label class="field field-grow">
+        <span>搜索</span>
+        <input v-model.trim="keyword" class="input" type="text" placeholder="用户名、邮箱、显示名" @keyup.enter="onSearch" />
+      </label>
 
-    <!-- 表格区 -->
-    <div class="w-full bg-white rounded-xl shadow p-6 border mt-6 overflow-x-auto">
-      <table class="w-full text-center border-separate border-spacing-0">
-        <thead class="bg-blue-50">
-          <tr>
-            <th class="py-3 px-2 font-bold text-gray-700">
-              <input 
-                type="checkbox" 
-                :checked="isAllSelected" 
-                @change="toggleSelectAll"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-              />
-            </th>
-            <th class="py-3 px-2 font-bold text-gray-700">ID</th>
-            <th class="py-3 px-2 font-bold text-gray-700">头像</th>
-            <th class="py-3 px-2 font-bold text-gray-700">用户名</th>
-            <th class="py-3 px-2 font-bold text-gray-700">显示名称</th>
-            <th class="py-3 px-2 font-bold text-gray-700">邮箱</th>
-            <th class="py-3 px-2 font-bold text-gray-700">手机号</th>
-            <th class="py-3 px-2 font-bold text-gray-700">角色</th>
-            <th class="py-3 px-2 font-bold text-gray-700">状态</th>
-            <th class="py-3 px-2 font-bold text-gray-700">创建时间</th>
-            <th class="py-3 px-2 font-bold text-gray-700">最后登录</th>
-            <th class="py-3 px-2 font-bold text-gray-700">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="user in users" :key="user.UserID" class="hover:bg-blue-50 even:bg-blue-50/40 transition">
-            <td class="py-2 px-2">
-              <input 
-                type="checkbox" 
-                :value="user.UserID"
-                v-model="selectedUsers"
-                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-              />
-            </td>
-            <td class="py-2 px-2">{{ user.UserID }}</td>
-            <td class="py-2 px-2">
-              <div class="flex justify-center">
-                <img 
-                  v-if="user.AvatarURL" 
-                  :src="user.AvatarURL" 
-                  class="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                  @error="handleAvatarError"
-                />
-                <div v-else class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                  {{ user.Username?.charAt(0).toUpperCase() }}
-                </div>
-              </div>
-            </td>
-            <td class="py-2 px-2">
-              <div class="font-medium">{{ user.Username }}</div>
-              <div v-if="user.Bio" class="text-xs text-gray-500 truncate max-w-24" :title="user.Bio">
-                {{ user.Bio }}
-              </div>
-            </td>
-            <td class="py-2 px-2">{{ user.DisplayName || '-' }}</td>
-            <td class="py-2 px-2">{{ user.Email }}</td>
-            <td class="py-2 px-2">{{ user.PhoneNumber || '-' }}</td>
-            <td class="py-2 px-2">
-              <div class="flex flex-wrap gap-1 justify-center">
-                <span 
-                  v-for="role in user.Roles" 
-                  :key="role.RoleID"
-                  class="px-2 py-1 text-xs rounded-full"
-                  :class="getRoleClass(role.Name)"
-                >
-                  {{ role.Name }}
-                </span>
-                <span v-if="!user.Roles || user.Roles.length === 0" class="text-gray-400 text-xs">无角色</span>
-              </div>
-            </td>
-            <td class="py-2 px-2">
-              <span 
-                class="px-2 py-1 rounded-full text-xs font-medium"
-                :class="user.IsActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-              >
-                {{ user.IsActive ? '启用' : '禁用' }}
-              </span>
-            </td>
-            <td class="py-2 px-2 text-xs">{{ formatTime(user.CreatedAt) }}</td>
-            <td class="py-2 px-2 text-xs">{{ formatTime(user.LastLogin) || '-' }}</td>
-            <td class="py-2 px-2 whitespace-nowrap">
-              <div class="flex gap-1 justify-center">
-                <button @click="onView(user)" class="btn-sm btn-info" title="查看详情">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                  </svg>
-                </button>
-                <button @click="onEdit(user)" class="btn-sm btn" title="编辑">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                  </svg>
-                </button>
-                <button @click="onStatusChange(user)" class="btn-sm" :class="user.IsActive ? 'btn-warning' : 'btn-success'" :title="user.IsActive ? '禁用' : '启用'">
-                  <svg v-if="user.IsActive" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"></path>
-                  </svg>
-                  <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                </button>
-                <button @click="onAssignRoles(user)" class="btn-sm btn-warning" title="分配角色">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                  </svg>
-                </button>
-                <button @click="onDelete(user)" class="btn-sm btn-danger" title="删除">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      
-      <!-- 空状态 -->
-      <div v-if="users.length === 0 && !loading" class="text-center py-8 text-gray-500">
-        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-        </svg>
-        <p>暂无用户数据</p>
-      </div>
-      
-      <!-- 加载状态 -->
-      <div v-if="loading" class="text-center py-8">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        <p class="mt-2 text-gray-500">加载中...</p>
-      </div>
-    </div>
+      <label class="field">
+        <span>状态</span>
+        <AppSelect
+          v-model="statusFilter"
+          class="input"
+          :options="statusFilterOptions"
+          placeholder="全部"
+          @change="onSearch"
+        />
+      </label>
 
-    <!-- 分页 -->
-    <div class="flex justify-end items-center gap-2 mt-4">
-      <button class="btn" :disabled="page===1" @click="page--; fetchUsers()">上一页</button>
-      <span>第 {{ page }} / {{ totalPages }} 页</span>
-      <button class="btn" :disabled="page===totalPages" @click="page++; fetchUsers()">下一页</button>
-      <select v-model="pageSize" @change="fetchUsers" class="input w-20 ml-2">
-        <option v-for="s in [10,20,50,100]" :key="s" :value="s">{{ s }}/页</option>
-      </select>
-    </div>
+      <label class="field">
+        <span>角色</span>
+        <AppSelect
+          v-model="roleFilter"
+          class="input"
+          :options="roleSelectOptions"
+          placeholder="全部"
+          searchable
+          @change="onSearch"
+        />
+      </label>
 
-    <!-- 新增/编辑弹窗 -->
-    <div v-if="showForm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
-        <button class="absolute top-4 right-6 text-gray-400 hover:text-blue-500 text-2xl" @click="showForm = false">×</button>
-        <h3 class="text-xl font-bold mb-6">{{ isEdit ? '编辑用户' : '新建用户' }}</h3>
-        <form @submit.prevent="onSave" class="space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="block mb-2 font-medium">用户名 <span class="text-red-500">*</span></label>
-              <input v-model="form.Username" class="input" required :disabled="isEdit" />
-            </div>
-            <div>
-              <label class="block mb-2 font-medium">显示名称</label>
-              <input v-model="form.DisplayName" class="input" placeholder="用户显示名称" />
-            </div>
-            <div>
-              <label class="block mb-2 font-medium">邮箱 <span class="text-red-500">*</span></label>
-              <input v-model="form.Email" class="input" required type="email" />
-            </div>
-            <div>
-              <label class="block mb-2 font-medium">手机号</label>
-              <input v-model="form.PhoneNumber" class="input" placeholder="手机号码" />
-            </div>
-            <div v-if="!isEdit">
-              <label class="block mb-2 font-medium">密码 <span class="text-red-500">*</span></label>
-              <input v-model="form.Password" class="input" required type="password" placeholder="设置密码" />
-            </div>
-            <div v-if="!isEdit">
-              <label class="block mb-2 font-medium">确认密码 <span class="text-red-500">*</span></label>
-              <input v-model="form.ConfirmPassword" class="input" required type="password" placeholder="再次输入密码" />
-            </div>
-            <div>
-              <label class="block mb-2 font-medium">头像URL</label>
-              <input v-model="form.AvatarURL" class="input" placeholder="头像图片链接" />
-            </div>
-            <div>
-              <label class="block mb-2 font-medium">状态</label>
-              <select v-model="form.IsActive" class="input">
-                <option :value="true">启用</option>
-                <option :value="false">禁用</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label class="block mb-2 font-medium">个人简介</label>
-            <textarea v-model="form.Bio" class="input" rows="3" placeholder="用户个人简介"></textarea>
-          </div>
-          <div>
-            <label class="block mb-2 font-medium">角色分配</label>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-              <label v-for="role in allRoles" :key="role.RoleID" class="flex items-center">
-                <input 
-                  type="checkbox" 
-                  :value="role.RoleID" 
-                  v-model="form.roleIds" 
-                  class="mr-2"
-                />
-                <span>{{ role.Name }}</span>
-              </label>
-            </div>
-            <div v-if="allRoles.length === 0" class="text-center py-4 text-gray-500">
-              暂无可用角色
-            </div>
-          </div>
-          <div class="flex justify-end gap-3 mt-8 pt-6 border-t">
-            <button type="button" class="btn-secondary" @click="showForm = false">取消</button>
-            <button type="submit" class="btn-primary" :disabled="saving">
-              {{ saving ? '保存中...' : '保存' }}
-            </button>
-          </div>
-        </form>
+      <div class="toolbar">
+        <button class="btn-secondary" @click="resetFilters">重置</button>
+        <button class="btn-primary" @click="onSearch">查询</button>
       </div>
-    </div>
+    </section>
 
-    <!-- 用户详情弹窗 -->
-    <div v-if="showDetail" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
-        <button class="absolute top-4 right-6 text-gray-400 hover:text-blue-500 text-2xl" @click="showDetail = false">×</button>
-        <div v-if="selectedUser" class="space-y-6">
-          <div class="flex items-center space-x-4">
-            <img 
-              v-if="selectedUser.AvatarURL" 
-              :src="selectedUser.AvatarURL" 
-              class="w-20 h-20 rounded-full object-cover border-4 border-gray-200"
-              @error="handleAvatarError"
-            />
-            <div v-else class="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-white text-2xl font-bold">
-              {{ selectedUser.Username?.charAt(0).toUpperCase() }}
-            </div>
-            <div>
-              <h3 class="text-2xl font-bold">{{ selectedUser.DisplayName || selectedUser.Username }}</h3>
-              <p class="text-gray-500">@{{ selectedUser.Username }}</p>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 class="font-medium mb-3">基本信息</h4>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-gray-500">用户ID:</span>
-                  <span>{{ selectedUser.UserID }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500">邮箱:</span>
-                  <span>{{ selectedUser.Email }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500">手机号:</span>
-                  <span>{{ selectedUser.PhoneNumber || '-' }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500">状态:</span>
-                  <span :class="selectedUser.IsActive ? 'text-green-600' : 'text-red-600'">
-                    {{ selectedUser.IsActive ? '启用' : '禁用' }}
+    <section v-if="selectedUserIds.length" class="batch-bar">
+      <span>已选择 {{ selectedUserIds.length }} 个用户</span>
+      <div class="toolbar">
+        <button class="btn-secondary" @click="batchSetStatus(true)">批量启用</button>
+        <button class="btn-secondary" @click="batchSetStatus(false)">批量禁用</button>
+        <button class="btn-danger" @click="batchDelete">批量删除</button>
+      </div>
+    </section>
+
+    <section class="table-panel">
+      <div v-if="loading" class="empty-state">加载中...</div>
+
+      <template v-else>
+        <div class="user-table-scroll">
+          <table class="user-table desktop-table">
+            <thead>
+              <tr>
+                <th>
+                  <input type="checkbox" :checked="allSelected" @change="toggleSelectAll" />
+                </th>
+                <th>用户</th>
+                <th>账号状态</th>
+                <th>在线状态</th>
+                <th>角色</th>
+                <th>邮箱 / 手机号</th>
+                <th>活跃会话</th>
+                <th>最后活跃</th>
+                <th>创建时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="user in users" :key="user.UserID">
+                <td>
+                  <input type="checkbox" :value="user.UserID" v-model="selectedUserIds" />
+                </td>
+                <td>
+                  <div class="user-cell">
+                    <img v-if="user.AvatarURL" :src="resolveAvatarUrl(user.AvatarURL)" class="avatar" @error="onAvatarError" />
+                    <div v-else class="avatar fallback">{{ user.Username?.slice(0, 1)?.toUpperCase() || 'U' }}</div>
+                    <div>
+                      <strong>{{ user.DisplayName || user.Username }}</strong>
+                      <span>@{{ user.Username }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span :class="['pill', user.IsActive ? 'success' : 'danger']">
+                    {{ user.IsActive ? '启用' : '禁用' }}
                   </span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h4 class="font-medium mb-3">时间信息</h4>
-              <div class="space-y-2">
-                <div class="flex justify-between">
-                  <span class="text-gray-500">创建时间:</span>
-                  <span>{{ formatTime(selectedUser.CreatedAt) }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-500">最后登录:</span>
-                  <span>{{ formatTime(selectedUser.LastLogin) || '-' }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div v-if="selectedUser.Bio">
-            <h4 class="font-medium mb-3">个人简介</h4>
-            <p class="text-gray-700 bg-gray-50 p-3 rounded">{{ selectedUser.Bio }}</p>
-          </div>
-          
-          <div>
-            <h4 class="font-medium mb-3">角色权限</h4>
-            <div class="flex flex-wrap gap-2">
-              <span 
-                v-for="role in selectedUser.Roles" 
-                :key="role.RoleID"
-                class="px-3 py-1 rounded-full text-sm"
-                :class="getRoleClass(role.Name)"
-              >
-                {{ role.Name }}
-              </span>
-              <span v-if="!selectedUser.Roles || selectedUser.Roles.length === 0" class="text-gray-400">
-                无角色分配
-              </span>
-            </div>
-          </div>
+                </td>
+                <td>
+                  <span :class="['pill', user.OnlineStatus === 'online' ? 'accent' : 'muted']">
+                    {{ user.OnlineStatus === 'online' ? '在线中' : '离线中' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="role-list">
+                    <span v-for="role in user.Roles || []" :key="role.RoleID" class="role-pill">{{ role.Name }}</span>
+                    <span v-if="!user.Roles?.length" class="role-pill muted">未分配</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="meta-stack">
+                    <span>{{ user.Email || '-' }}</span>
+                    <span>{{ user.PhoneNumber || '-' }}</span>
+                  </div>
+                </td>
+                <td>{{ user.ActiveSessions || 0 }}</td>
+                <td>{{ formatTime(user.LastSeenAt || user.LastLogin) }}</td>
+                <td>{{ formatTime(user.CreatedAt) }}</td>
+                <td>
+                  <div class="action-group">
+                    <button class="btn-icon" @click="openDetail(user)">详情</button>
+                    <button class="btn-icon" @click="openEditForm(user)">编辑</button>
+                    <button class="btn-icon" @click="toggleUserStatus(user)">{{ user.IsActive ? '禁用' : '启用' }}</button>
+                    <button class="btn-icon" @click="forceOffline(user)">下线</button>
+                    <button class="btn-icon danger" @click="removeUser(user)">删除</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
-    </div>
 
-    <!-- 角色分配弹窗 -->
-    <div v-if="showRoleAssign" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-md relative">
-        <button class="absolute top-4 right-6 text-gray-400 hover:text-blue-500 text-2xl" @click="showRoleAssign = false">×</button>
-        
-        <div v-if="selectedUser" class="space-y-6">
-          <div class="text-center">
-            <h3 class="text-xl font-bold text-gray-900">分配角色</h3>
-            <p class="text-gray-500 mt-2">为用户 "{{ selectedUser.Username }}" 分配角色</p>
-          </div>
-          
-          <div>
-            <label class="block mb-3 font-medium">选择角色</label>
-            <div class="space-y-2 max-h-60 overflow-y-auto">
-              <label v-for="role in allRoles" :key="role.RoleID" class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  :value="role.RoleID" 
-                  v-model="roleAssignForm.roleIds" 
-                  class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <div class="ml-3">
-                  <div class="font-medium">{{ role.Name }}</div>
-                  <div v-if="role.Description" class="text-sm text-gray-500">{{ role.Description }}</div>
-                </div>
+        <div class="mobile-card-list user-mobile-list">
+          <article v-for="user in users" :key="`mobile-${user.UserID}`" class="mobile-card user-mobile-card">
+            <div class="mobile-card-head">
+              <label class="mobile-check">
+                <input type="checkbox" :value="user.UserID" v-model="selectedUserIds" />
+                <span>选择</span>
               </label>
+              <div class="mobile-pill-row">
+                <span :class="['pill', user.IsActive ? 'success' : 'danger']">
+                  {{ user.IsActive ? '启用' : '禁用' }}
+                </span>
+                <span :class="['pill', user.OnlineStatus === 'online' ? 'accent' : 'muted']">
+                  {{ user.OnlineStatus === 'online' ? '在线中' : '离线中' }}
+                </span>
+              </div>
             </div>
-            <div v-if="allRoles.length === 0" class="text-center py-4 text-gray-500">
-              暂无可用角色
+
+            <div class="user-cell mobile-user-head">
+              <img v-if="user.AvatarURL" :src="resolveAvatarUrl(user.AvatarURL)" class="avatar" @error="onAvatarError" />
+              <div v-else class="avatar fallback">{{ user.Username?.slice(0, 1)?.toUpperCase() || 'U' }}</div>
+              <div>
+                <strong>{{ user.DisplayName || user.Username }}</strong>
+                <span>@{{ user.Username }}</span>
+              </div>
             </div>
+
+            <div class="mobile-info-grid">
+              <div class="mobile-info-item">
+                <span>邮箱</span>
+                <strong>{{ user.Email || '-' }}</strong>
+              </div>
+              <div class="mobile-info-item">
+                <span>手机号</span>
+                <strong>{{ user.PhoneNumber || '-' }}</strong>
+              </div>
+              <div class="mobile-info-item">
+                <span>活跃会话</span>
+                <strong>{{ user.ActiveSessions || 0 }}</strong>
+              </div>
+              <div class="mobile-info-item">
+                <span>最后活跃</span>
+                <strong>{{ formatTime(user.LastSeenAt || user.LastLogin) }}</strong>
+              </div>
+              <div class="mobile-info-item">
+                <span>创建时间</span>
+                <strong>{{ formatTime(user.CreatedAt) }}</strong>
+              </div>
+            </div>
+
+            <div class="mobile-section">
+              <span class="mobile-section-label">角色</span>
+              <div class="role-list">
+                <span v-for="role in user.Roles || []" :key="`mobile-role-${user.UserID}-${role.RoleID}`" class="role-pill">{{ role.Name }}</span>
+                <span v-if="!user.Roles?.length" class="role-pill muted">未分配</span>
+              </div>
+            </div>
+
+            <div class="action-group mobile-action-group">
+              <button class="btn-icon" @click="openDetail(user)">详情</button>
+              <button class="btn-icon" @click="openEditForm(user)">编辑</button>
+              <button class="btn-icon" @click="toggleUserStatus(user)">{{ user.IsActive ? '禁用' : '启用' }}</button>
+              <button class="btn-icon" @click="forceOffline(user)">下线</button>
+              <button class="btn-icon danger" @click="removeUser(user)">删除</button>
+            </div>
+          </article>
+        </div>
+
+        <div v-if="!users.length" class="empty-state">当前没有符合条件的用户</div>
+      </template>
+    </section>
+
+    <section class="pager">
+      <button class="btn-secondary" :disabled="page <= 1" @click="changePage(page - 1)">上一页</button>
+      <span>第 {{ page }} / {{ totalPages }} 页</span>
+      <button class="btn-secondary" :disabled="page >= totalPages" @click="changePage(page + 1)">下一页</button>
+      <AppSelect
+        v-model="pageSize"
+        class="input page-size"
+        :options="pageSizeOptions"
+        @change="changePage(1)"
+      />
+    </section>
+
+    <Teleport to="body">
+      <div v-if="showForm" class="modal-mask" @click.self="closeForm">
+        <div class="modal-card">
+          <div class="modal-head">
+            <div>
+              <span class="panel-kicker">{{ editingUserId ? 'Edit User' : 'Create User' }}</span>
+              <h2>{{ editingUserId ? '编辑用户' : '新建用户' }}</h2>
+            </div>
+            <button class="btn-icon" @click="closeForm">关闭</button>
           </div>
-          
-          <div class="flex justify-end gap-3 pt-4 border-t">
-            <button @click="showRoleAssign = false" class="btn-secondary">取消</button>
-            <button @click="saveRoleAssignment" class="btn-primary" :disabled="saving">
-              {{ saving ? '保存中...' : '保存' }}
-            </button>
+
+          <form class="form-grid" @submit.prevent="saveUser">
+            <label class="field">
+              <span>用户名</span>
+              <input v-model.trim="form.username" class="input" type="text" :disabled="!!editingUserId" />
+            </label>
+
+            <label class="field">
+              <span>显示名</span>
+              <input v-model.trim="form.displayName" class="input" type="text" />
+            </label>
+
+            <label class="field">
+              <span>邮箱</span>
+              <input v-model.trim="form.email" class="input" type="email" />
+            </label>
+
+            <label class="field">
+              <span>手机号</span>
+              <input v-model.trim="form.phoneNumber" class="input" type="text" />
+            </label>
+
+            <label v-if="!editingUserId" class="field">
+              <span>密码</span>
+              <input v-model="form.password" class="input" type="password" autocomplete="new-password" />
+            </label>
+
+            <label v-if="!editingUserId" class="field">
+              <span>确认密码</span>
+              <input v-model="form.confirmPassword" class="input" type="password" autocomplete="new-password" />
+            </label>
+
+            <label class="field">
+              <span>头像地址</span>
+              <input v-model.trim="form.avatarURL" class="input" type="text" />
+            </label>
+
+            <label class="field">
+              <span>账号状态</span>
+              <AppSelect v-model="form.isActive" class="input" :options="userStatusOptions" />
+            </label>
+
+            <label class="field field-full">
+              <span>角色</span>
+              <div class="role-check-grid">
+                <label v-for="role in roles" :key="role.RoleID" class="role-check">
+                  <input :value="role.RoleID" v-model="form.roleIds" type="checkbox" />
+                  <span>{{ role.Name }}</span>
+                </label>
+              </div>
+            </label>
+
+            <label class="field field-full">
+              <span>个人简介</span>
+              <textarea v-model.trim="form.bio" class="input textarea" rows="4"></textarea>
+            </label>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" @click="closeForm">取消</button>
+              <button type="submit" class="btn-primary" :disabled="saving">{{ saving ? '保存中...' : '保存' }}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div v-if="detailUser" class="modal-mask" @click.self="detailUser = null">
+        <div class="modal-card detail-card">
+          <div class="modal-head">
+            <div>
+              <span class="panel-kicker">User Detail</span>
+              <h2>用户详情</h2>
+            </div>
+            <button class="btn-icon" @click="detailUser = null">关闭</button>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item"><span>用户名</span><strong>{{ detailUser.Username }}</strong></div>
+            <div class="detail-item"><span>显示名</span><strong>{{ detailUser.DisplayName || '-' }}</strong></div>
+            <div class="detail-item"><span>邮箱</span><strong>{{ detailUser.Email || '-' }}</strong></div>
+            <div class="detail-item"><span>手机号</span><strong>{{ detailUser.PhoneNumber || '-' }}</strong></div>
+            <div class="detail-item"><span>账号状态</span><strong>{{ detailUser.IsActive ? '启用' : '禁用' }}</strong></div>
+            <div class="detail-item"><span>在线状态</span><strong>{{ detailUser.OnlineStatus === 'online' ? '在线中' : '离线中' }}</strong></div>
+            <div class="detail-item"><span>活跃会话</span><strong>{{ detailUser.ActiveSessions || 0 }}</strong></div>
+            <div class="detail-item"><span>最后活跃</span><strong>{{ formatTime(detailUser.LastSeenAt || detailUser.LastLogin) }}</strong></div>
+            <div class="detail-item field-full"><span>角色</span><strong>{{ (detailUser.Roles || []).map(role => role.Name).join('、') || '未分配' }}</strong></div>
+            <div class="detail-item field-full"><span>简介</span><strong>{{ detailUser.Bio || '-' }}</strong></div>
           </div>
         </div>
       </div>
-    </div>
+    </Teleport>
+
+    <StatusButton :status="statusType" :text="statusText" :show="showStatus" />
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from 'vue'
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import AppSelect from '@/components/AppSelect.vue'
+import StatusButton from '@/components/StatusButton.vue'
 import {
-  getUsers,
   addUser,
-  updateUser,
-  deleteUser,
-  setUserStatus,
   assignRoles,
+  batchDeleteUsers,
+  deleteUser,
+  forceOfflineUser,
   getRoles,
   getUserStatistics,
-  batchDeleteUsers
+  getUsers,
+  setUserStatus,
+  updateUserAll,
 } from '@/api/user'
+import { resolveAvatarUrl } from '@/utils/avatar'
 
-const users = ref([])
+interface RoleItem {
+  RoleID: number
+  Name: string
+  Description?: string
+}
+
+interface UserItem {
+  UserID: number
+  Username: string
+  DisplayName?: string
+  Email?: string
+  PhoneNumber?: string
+  AvatarURL?: string
+  Bio?: string
+  IsActive: boolean
+  CreatedAt?: string
+  LastLogin?: string
+  LastSeenAt?: string
+  OnlineStatus?: 'online' | 'offline'
+  ActiveSessions?: number
+  Roles?: RoleItem[]
+}
+
+const loading = ref(false)
+const saving = ref(false)
 const page = ref(1)
 const pageSize = ref(10)
-const totalPages = ref(1)
+const total = ref(0)
 const keyword = ref('')
 const statusFilter = ref('')
 const roleFilter = ref('')
-const loading = ref(false)
-const saving = ref(false)
-
+const users = ref<UserItem[]>([])
+const statusFilterOptions = [
+  { label: '全部', value: '' },
+  { label: '启用', value: 'active' },
+  { label: '禁用', value: 'inactive' }
+]
+const pageSizeOptions = [
+  { label: '10', value: 10 },
+  { label: '20', value: 20 },
+  { label: '50', value: 50 }
+]
+const userStatusOptions = [
+  { label: '启用', value: true },
+  { label: '禁用', value: false }
+]
+const roleSelectOptions = computed(() => [
+  { label: '全部', value: '' },
+  ...roles.value.map((role) => ({
+    label: role.Name,
+    value: String(role.RoleID)
+  }))
+])
+const roles = ref<RoleItem[]>([])
+const selectedUserIds = ref<number[]>([])
 const showForm = ref(false)
-const showDetail = ref(false)
-const showRoleAssign = ref(false)
-const isEdit = ref(false)
-const selectedUser = ref(null)
-const selectedUsers = ref([]) // 批量选择的用户ID数组
+const editingUserId = ref<number | null>(null)
+const detailUser = ref<UserItem | null>(null)
+
 const statistics = ref({
-  totalUsers: 0,
-  activeUsers: 0,
-  inactiveUsers: 0,
-  newUsersToday: 0,
-  newUsersThisWeek: 0,
-  newUsersThisMonth: 0,
-  roleDistribution: []
+  total: 0,
+  enabled: 0,
+  online: 0,
+  today: 0,
 })
 
-const form = ref({ 
-  UserID: null, 
-  Username: '', 
-  Email: '', 
-  PhoneNumber: '', 
-  DisplayName: '',
-  Bio: '',
-  AvatarURL: '',
-  Password: '',
-  ConfirmPassword: '',
-  Roles: [], 
-  IsActive: true, 
-  roleIds: [] 
+const form = ref({
+  username: '',
+  displayName: '',
+  email: '',
+  phoneNumber: '',
+  password: '',
+  confirmPassword: '',
+  avatarURL: '',
+  bio: '',
+  isActive: true,
+  roleIds: [] as number[],
 })
 
-const allRoles = ref([])
-const roleAssignForm = ref({
-  roleIds: []
-})
+const showStatus = ref(false)
+const statusType = ref<'success' | 'error' | 'loading'>('success')
+const statusText = ref('')
 
-// 计算属性
-const isAllSelected = computed(() => {
-  return users.value.length > 0 && selectedUsers.value.length === users.value.length
-})
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+const allSelected = computed(() => users.value.length > 0 && users.value.every(user => selectedUserIds.value.includes(user.UserID)))
 
-// 获取角色样式
-function getRoleClass(roleName) {
-  const classes = {
-    'admin': 'bg-red-100 text-red-800',
-    'author': 'bg-blue-100 text-blue-800',
-    'editor': 'bg-green-100 text-green-800',
-    'user': 'bg-gray-100 text-gray-800'
-  }
-  return classes[roleName.toLowerCase()] || 'bg-purple-100 text-purple-800'
-}
-
-// 格式化时间
-function formatTime(timestamp) {
-  if (!timestamp) return '-'
-  return new Date(timestamp).toLocaleString('zh-CN')
-}
-
-// 头像加载错误处理
-function handleAvatarError(event) {
-  if (event.target) {
-    event.target.style.display = 'none'
-    const nextElement = event.target.nextElementSibling
-    if (nextElement) {
-      nextElement.style.display = 'flex'
-    }
+function showStatusMsg(type: 'success' | 'error' | 'loading', text: string) {
+  statusType.value = type
+  statusText.value = text
+  showStatus.value = true
+  if (type !== 'loading') {
+    window.setTimeout(() => {
+      showStatus.value = false
+    }, 2200)
   }
 }
 
-// 获取用户统计信息
-async function fetchUserStatistics() {
+function formatTime(value?: string) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  return date.toLocaleString()
+}
+
+function onAvatarError(event: Event) {
+  const target = event.target as HTMLImageElement | null
+  if (!target) return
+  target.style.display = 'none'
+}
+
+function resetForm() {
+  form.value = {
+    username: '',
+    displayName: '',
+    email: '',
+    phoneNumber: '',
+    password: '',
+    confirmPassword: '',
+    avatarURL: '',
+    bio: '',
+    isActive: true,
+    roleIds: [],
+  }
+}
+
+function closeForm() {
+  showForm.value = false
+  editingUserId.value = null
+  resetForm()
+}
+
+function openCreateForm() {
+  editingUserId.value = null
+  resetForm()
+  showForm.value = true
+}
+
+function openEditForm(user: UserItem) {
+  editingUserId.value = user.UserID
+  form.value = {
+    username: user.Username,
+    displayName: user.DisplayName || '',
+    email: user.Email || '',
+    phoneNumber: user.PhoneNumber || '',
+    password: '',
+    confirmPassword: '',
+    avatarURL: user.AvatarURL || '',
+    bio: user.Bio || '',
+    isActive: !!user.IsActive,
+    roleIds: (user.Roles || []).map(role => Number(role.RoleID)),
+  }
+  showForm.value = true
+}
+
+function openDetail(user: UserItem) {
+  detailUser.value = user
+}
+
+async function fetchUsersData() {
+  loading.value = true
   try {
-    const res = await getUserStatistics()
-    if (res.code === 0) {
-      // 映射API响应字段到前端字段
-      statistics.value = {
-        totalUsers: res.data.total || 0,
-        activeUsers: res.data.active || 0,
-        inactiveUsers: (res.data.total || 0) - (res.data.active || 0),
-        newUsersToday: res.data.today || 0,
-        newUsersThisWeek: 0, // 后端暂无此字段
-        newUsersThisMonth: res.data.thisMonth || 0,
-        roleDistribution: []
-      }
-    }
-  } catch (error) {
-    console.error('获取用户统计失败:', error)
-  }
-}
+    const res = await getUsers({
+      page: page.value,
+      pageSize: pageSize.value,
+      keyword: keyword.value || undefined,
+      status: statusFilter.value || undefined,
+      roleId: roleFilter.value || undefined,
+    })
 
-// 批量操作相关函数
-function toggleSelectAll() {
-  if (isAllSelected.value) {
-    selectedUsers.value = []
-  } else {
-    selectedUsers.value = users.value.map(user => user.UserID)
-  }
-}
-
-function clearSelection() {
-  selectedUsers.value = []
-}
-
-async function batchEnable() {
-  if (!selectedUsers.value.length) return
-  
-  if (!confirm(`确定要启用选中的 ${selectedUsers.value.length} 个用户吗？`)) return
-  
-  try {
-    saving.value = true
-    for (const userId of selectedUsers.value) {
-      await setUserStatus(userId, true)
-    }
-    alert('批量启用成功')
-    fetchUsers()
-    clearSelection()
-  } catch (error) {
-    console.error('批量启用失败:', error)
-    alert('批量启用失败')
+    const payload = res?.data || {}
+    users.value = payload.list || []
+    total.value = Number(payload.total || 0)
+    selectedUserIds.value = selectedUserIds.value.filter(id => users.value.some(user => user.UserID === id))
+  } catch (error: any) {
+    showStatusMsg('error', error?.response?.data?.message || '获取用户列表失败')
   } finally {
-    saving.value = false
+    loading.value = false
   }
 }
 
-async function batchDisable() {
-  if (!selectedUsers.value.length) return
-  
-  if (!confirm(`确定要禁用选中的 ${selectedUsers.value.length} 个用户吗？`)) return
-  
-  try {
-    saving.value = true
-    for (const userId of selectedUsers.value) {
-      await setUserStatus(userId, false)
-    }
-    alert('批量禁用成功')
-    fetchUsers()
-    clearSelection()
-  } catch (error) {
-    console.error('批量禁用失败:', error)
-    alert('批量禁用失败')
-  } finally {
-    saving.value = false
-  }
-}
-
-async function batchDelete() {
-  if (!selectedUsers.value.length) return
-  
-  if (!confirm(`确定要删除选中的 ${selectedUsers.value.length} 个用户吗？此操作不可恢复！`)) return
-  
-  try {
-    saving.value = true
-    const res = await batchDeleteUsers(selectedUsers.value)
-    
-    if (res.code === 0) {
-      alert(res.message || '批量删除成功')
-      fetchUsers()
-      clearSelection()
-    } else {
-      alert(res.message || '批量删除失败')
-    }
-  } catch (error) {
-    console.error('批量删除失败:', error)
-    alert('批量删除失败')
-  } finally {
-    saving.value = false
-  }
-}
-
-async function fetchRoles() {
+async function fetchRolesData() {
   try {
     const res = await getRoles()
-    if (res.code === 0) {
-      allRoles.value = res.data || []
-    }
-  } catch (error) {
-    console.error('获取角色列表失败:', error)
+    roles.value = res?.data || []
+  } catch (error: any) {
+    showStatusMsg('error', error?.response?.data?.message || '获取角色列表失败')
   }
 }
 
-function fetchUsers() {
-  loading.value = true
-  
-  // 构建参数，只包含有值的参数
-  const params = { 
-    page: page.value, 
-    pageSize: pageSize.value
-  }
-  
-  // 只有当keyword不为空时才添加
-  if (keyword.value && keyword.value.trim()) {
-    params.keyword = keyword.value.trim()
-  }
-  
-  // 只有当statusFilter不为空时才添加
-  if (statusFilter.value && statusFilter.value !== '') {
-    params.status = statusFilter.value
-  }
-  
-  // 只有当roleFilter不为空时才添加
-  if (roleFilter.value && roleFilter.value !== '') {
-    params.roleId = roleFilter.value
-  }
-  
-  console.log('[fetchUsers] 请求参数:', params)
-  
-  getUsers(params).then(res => {
-    console.log('[fetchUsers] 原始返回:', res)
-    console.log('[fetchUsers] res.code:', res?.code)
-    console.log('[fetchUsers] res.data:', res?.data)
-    console.log('[fetchUsers] res.data.list:', res?.data?.list)
-    console.log('[fetchUsers] res.data.total:', res?.data?.total)
-    
-    if (res.code === 0) {
-      const userList = res.data?.list || []
-      const totalCount = res.data?.total || 0
-      
-      console.log('[fetchUsers] 解析结果 - userList:', userList)
-      console.log('[fetchUsers] 解析结果 - totalCount:', totalCount)
-      
-      users.value = userList
-      totalPages.value = Math.ceil(totalCount / pageSize.value)
-      
-      console.log('[fetchUsers] 最终结果 - users.value:', users.value)
-      console.log('[fetchUsers] 最终结果 - totalPages.value:', totalPages.value)
+async function fetchStatisticsData() {
+  try {
+    const res = await getUserStatistics()
+    const data = res?.data || {}
+    statistics.value = {
+      total: Number(data.total || 0),
+      enabled: Number(data.enabled ?? data.active ?? 0),
+      online: Number(data.online || 0),
+      today: Number(data.today || 0),
     }
-  }).catch(error => {
-    console.error('获取用户列表失败:', error)
-    users.value = []
-    totalPages.value = 0
-  }).finally(() => {
-    loading.value = false
-  })
+  } catch (error: any) {
+    showStatusMsg('error', error?.response?.data?.message || '获取统计信息失败')
+  }
 }
 
-function onSearch() {
+async function fetchAll() {
+  await Promise.all([fetchUsersData(), fetchRolesData(), fetchStatisticsData()])
+}
+
+async function onSearch() {
   page.value = 1
-  fetchUsers()
+  await fetchUsersData()
 }
 
 function resetFilters() {
   keyword.value = ''
   statusFilter.value = ''
   roleFilter.value = ''
-  page.value = 1
-  fetchUsers()
+  onSearch()
 }
 
-function onAdd() {
-  isEdit.value = false
-  form.value = {
-    UserID: null,
-    Username: '',
-    Email: '',
-    PhoneNumber: '',
-    DisplayName: '',
-    Bio: '',
-    AvatarURL: '',
-    Password: '',
-    ConfirmPassword: '',
-    Roles: [],
-    IsActive: true,
-    roleIds: []
-  }
-  showForm.value = true
+function changePage(nextPage: number) {
+  page.value = Math.min(Math.max(1, nextPage), totalPages.value)
+  fetchUsersData()
 }
 
-function onEdit(user) {
-  isEdit.value = true
-  selectedUser.value = user
-  const currentRoleIds = user.Roles ? user.Roles.map(r => parseInt(r.RoleID, 10)) : []
-  form.value = {
-    UserID: user.UserID,
-    Username: user.Username,
-    Email: user.Email,
-    PhoneNumber: user.PhoneNumber || '',
-    DisplayName: user.DisplayName || '',
-    Bio: user.Bio || '',
-    AvatarURL: user.AvatarURL || '',
-    Password: '',
-    ConfirmPassword: '',
-    Roles: user.Roles || [],
-    IsActive: user.IsActive,
-    roleIds: currentRoleIds // Initialize roleIds from user's current roles
-  }
-  showForm.value = true
+function toggleSelectAll(event: Event) {
+  const checked = (event.target as HTMLInputElement).checked
+  selectedUserIds.value = checked ? users.value.map(user => user.UserID) : []
 }
 
-function onView(user) {
-  selectedUser.value = user
-  showDetail.value = true
-}
-
-async function onSave() {
-  if (!form.value.Username || !form.value.Email) {
-    alert('用户名和邮箱为必填项')
+async function saveUser() {
+  if (saving.value) return
+  if (!form.value.username.trim() || !form.value.email.trim()) {
+    showStatusMsg('error', '用户名和邮箱不能为空')
     return
   }
-  
-  if (!isEdit.value && (!form.value.Password || form.value.Password.length < 6)) {
-    alert('密码至少6位')
-    return
-  }
-  
-  if (!isEdit.value && form.value.Password !== form.value.ConfirmPassword) {
-    alert('两次密码输入不一致')
-    return
-  }
-  
-  try {
-    saving.value = true
-    
-    if (isEdit.value) {
-      // 编辑用户 - 使用JSON格式
-      const userData = {
-        username: form.value.Username,
-        email: form.value.Email,
-        isActive: form.value.IsActive
-      }
-      
-      // 根据后端API文档调整字段名
-      if (form.value.PhoneNumber) userData.phoneNumber = form.value.PhoneNumber
-      if (form.value.DisplayName) userData.displayName = form.value.DisplayName
-      if (form.value.Bio) userData.bio = form.value.Bio
-      if (form.value.Password) userData.password = form.value.Password
-      
-      // 确保isActive是布尔值
-      userData.isActive = Boolean(form.value.IsActive)
-      
-      const res = await updateUser(form.value.UserID, userData)
-      if (res.code === 0) {
-        // 用户基本信息更新成功后，处理角色分配
-        // 添加短暂延迟，确保用户更新完成
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        try {
-          // 分配角色（这会覆盖之前的角色分配）
-          const roleIds = form.value.roleIds || []
-          
-          // 确保roleIds是有效的数组
-          if (!Array.isArray(roleIds)) {
-            throw new Error('roleIds必须是数组格式')
-          }
-          
-          // 将字符串ID转换为数字ID（HTML checkbox的value总是字符串）
-          const validRoleIds = roleIds
-            .filter(id => id && id !== '')
-            .map(id => parseInt(id, 10))
-            .filter(id => !isNaN(id))
-          
-          const roleRes = await assignRoles(form.value.UserID, validRoleIds)
-          
-          if (roleRes.code === 0) {
-            alert('用户更新成功，角色分配成功')
-          } else {
-            alert('用户基本信息更新成功，但角色分配失败：' + roleRes.message)
-          }
-        } catch (roleError) {
-          console.error('[onSave] 角色分配失败:', roleError)
-          alert('用户基本信息更新成功，但角色分配失败：' + roleError.message)
-        }
-        
-        showForm.value = false
-        fetchUsers()
-        fetchUserStatistics() // 刷新统计
-      } else {
-        alert(res.message || '用户更新失败')
-      }
-    } else {
-      // 新增用户
-      const res = await addUser({
-        username: form.value.Username,
-        email: form.value.Email,
-        password: form.value.Password,
-        phoneNumber: form.value.PhoneNumber || undefined,
-        displayName: form.value.DisplayName || undefined,
-        bio: form.value.Bio || undefined
-      })
-      
-      if (res.code === 0) {
-        console.log('[onSave] 用户创建成功，响应数据:', res.data)
-        // 创建用户成功后，如果有选择角色，则分配角色
-        if (form.value.roleIds && form.value.roleIds.length > 0) {
-          console.log('[onSave] 准备分配角色，选择的角色ID:', form.value.roleIds)
-          const userId = res.data?.UserID || res.data?.id
-          console.log('[onSave] 获取到的用户ID:', userId)
-          
-          if (userId) {
-            try {
-              console.log('[onSave] 开始分配角色，用户ID:', userId, '角色ID:', form.value.roleIds)
-              const roleRes = await assignRoles(userId, form.value.roleIds)
-              console.log('[onSave] 角色分配响应:', roleRes)
-              
-              if (roleRes.code === 0) {
-                alert('用户创建成功，角色分配成功')
-              } else {
-                alert('用户创建成功，但角色分配失败：' + roleRes.message)
-              }
-            } catch (roleError) {
-              console.error('[onSave] 角色分配失败:', roleError)
-              console.error('[onSave] 角色分配错误详情:', roleError.response?.data)
-              alert('用户创建成功，但角色分配失败：' + roleError.message)
-            }
-          } else {
-            console.error('[onSave] 无法获取用户ID，响应数据结构:', res.data)
-            alert('用户创建成功，但无法获取用户ID进行角色分配')
-          }
-        } else {
-          console.log('[onSave] 未选择角色，跳过角色分配')
-          alert('用户创建成功')
-        }
-        
-        showForm.value = false
-        fetchUsers()
-        fetchUserStatistics() // 刷新统计
-      } else {
-        alert(res.message || '用户创建失败')
-      }
-    }
-  } catch (error) {
-    console.error('保存用户失败:', error)
-    alert('操作失败')
-  } finally {
-    saving.value = false
-  }
-}
-
-async function onDelete(user) {
-  if (!confirm(`确定要删除用户 "${user.Username}" 吗？此操作不可恢复！`)) return
-  
-  try {
-    const res = await deleteUser(user.UserID)
-    if (res.code === 0) {
-      alert('用户删除成功')
-      fetchUsers()
-      fetchUserStatistics() // 刷新统计
-    } else {
-      alert(res.message || '用户删除失败')
-    }
-  } catch (error) {
-    console.error('删除用户失败:', error)
-    alert('删除失败')
-  }
-}
-
-async function onStatusChange(user) {
-  const action = user.IsActive ? '禁用' : '启用'
-  if (!confirm(`确定要${action}用户 "${user.Username}" 吗？`)) return
-  
-  try {
-    const res = await setUserStatus(user.UserID, !user.IsActive)
-    if (res.code === 0) {
-      alert(`用户${action}成功`)
-      fetchUsers()
-      fetchUserStatistics() // 刷新统计
-    } else {
-      alert(res.message || `用户${action}失败`)
-    }
-  } catch (error) {
-    console.error(`${action}用户失败:`, error)
-    alert(`${action}失败`)
-  }
-}
-
-async function onAssignRoles(user) {
-  selectedUser.value = user
-  // 初始化角色分配表单，设置当前用户的角色
-  roleAssignForm.value.roleIds = user.Roles ? user.Roles.map(r => parseInt(r.RoleID, 10)) : []
-  showRoleAssign.value = true
-}
-
-async function saveRoleAssignment() {
-  if (!selectedUser.value) return
-  
-  try {
-    saving.value = true
-    
-    // 将字符串ID转换为数字ID
-    const roleIds = roleAssignForm.value.roleIds || []
-    const validRoleIds = roleIds
-      .filter(id => id && id !== '')
-      .map(id => parseInt(id, 10))
-      .filter(id => !isNaN(id))
-    
-    // 如果没有选择任何角色，提示用户
-    if (validRoleIds.length === 0) {
-      alert('请至少选择一个角色')
+  if (!editingUserId.value) {
+    if (!form.value.password) {
+      showStatusMsg('error', '密码不能为空')
       return
     }
-    
-    const res = await assignRoles(selectedUser.value.UserID, validRoleIds)
-    
-    if (res.code === 0) {
-      alert('角色分配成功')
-      showRoleAssign.value = false
-      fetchUsers() // 刷新用户列表
-    } else {
-      alert(res.message || '角色分配失败')
+    if (form.value.password.length < 6) {
+      showStatusMsg('error', '密码至少 6 位')
+      return
     }
-  } catch (error) {
-    console.error('[saveRoleAssignment] 分配角色失败:', error)
-    alert('分配角色失败: ' + error.message)
+    if (form.value.password !== form.value.confirmPassword) {
+      showStatusMsg('error', '两次输入的密码不一致')
+      return
+    }
+  }
+  if (!form.value.roleIds.length) {
+    showStatusMsg('error', '至少选择一个角色')
+    return
+  }
+
+  saving.value = true
+  try {
+    const payload = {
+      username: form.value.username,
+      displayName: form.value.displayName || undefined,
+      email: form.value.email,
+      phoneNumber: form.value.phoneNumber || undefined,
+      avatarURL: form.value.avatarURL || undefined,
+      bio: form.value.bio || undefined,
+      isActive: form.value.isActive,
+      roleIds: form.value.roleIds,
+      ...(editingUserId.value ? {} : { password: form.value.password }),
+    }
+
+    const res = editingUserId.value
+      ? await updateUserAll(editingUserId.value, payload)
+      : await addUser(payload)
+
+    if (res.code !== 0) {
+      showStatusMsg('error', res.message || '保存失败')
+      return
+    }
+
+    if (editingUserId.value) {
+      await assignRoles(editingUserId.value, form.value.roleIds)
+    }
+
+    showStatusMsg('success', res.message || '保存成功')
+    closeForm()
+    await fetchAll()
+  } catch (error: any) {
+    showStatusMsg('error', error?.response?.data?.message || '保存失败')
   } finally {
     saving.value = false
+  }
+}
+
+async function toggleUserStatus(user: UserItem) {
+  try {
+    const res = await setUserStatus(user.UserID, !user.IsActive)
+    if (res.code !== 0) {
+      showStatusMsg('error', res.message || '状态更新失败')
+      return
+    }
+    showStatusMsg('success', res.message || '状态已更新')
+    await fetchAll()
+  } catch (error: any) {
+    showStatusMsg('error', error?.response?.data?.message || '状态更新失败')
+  }
+}
+
+async function forceOffline(user: UserItem) {
+  try {
+    const res = await forceOfflineUser(user.UserID)
+    if (res.code !== 0) {
+      showStatusMsg('error', res.message || '强制下线失败')
+      return
+    }
+    showStatusMsg('success', res.message || '已强制下线')
+    await fetchAll()
+  } catch (error: any) {
+    showStatusMsg('error', error?.response?.data?.message || '强制下线失败')
+  }
+}
+
+async function removeUser(user: UserItem) {
+  if (!window.confirm(`确定删除用户 ${user.Username} 吗？`)) return
+
+  try {
+    const res = await deleteUser(user.UserID)
+    if (res.code !== 0) {
+      showStatusMsg('error', res.message || '删除失败')
+      return
+    }
+    showStatusMsg('success', res.message || '删除成功')
+    await fetchAll()
+  } catch (error: any) {
+    showStatusMsg('error', error?.response?.data?.message || '删除失败')
+  }
+}
+
+async function batchDelete() {
+  if (!selectedUserIds.value.length) return
+  if (!window.confirm(`确定删除选中的 ${selectedUserIds.value.length} 个用户吗？`)) return
+
+  try {
+    const res = await batchDeleteUsers(selectedUserIds.value)
+    if (res.code !== 0) {
+      showStatusMsg('error', res.message || '批量删除失败')
+      return
+    }
+    selectedUserIds.value = []
+    showStatusMsg('success', res.message || '批量删除成功')
+    await fetchAll()
+  } catch (error: any) {
+    showStatusMsg('error', error?.response?.data?.message || '批量删除失败')
+  }
+}
+
+async function batchSetStatus(isActive: boolean) {
+  if (!selectedUserIds.value.length) return
+
+  try {
+    await Promise.all(selectedUserIds.value.map(id => setUserStatus(id, isActive)))
+    showStatusMsg('success', isActive ? '批量启用成功' : '批量禁用成功')
+    await fetchAll()
+  } catch (error: any) {
+    showStatusMsg('error', error?.response?.data?.message || '批量操作失败')
   }
 }
 
 onMounted(() => {
-  // Token status check (for debugging, kept for now)
-  const token = localStorage.getItem('token')
-  console.log('[UserManage] 当前token状态:', {
-    hasToken: !!token,
-    tokenLength: token ? token.length : 0,
-    tokenPreview: token ? token.substring(0, 20) + '...' : '无token',
-    fullToken: token
-  })
-  if (!token) {
-    console.warn('[UserManage] 未找到token，API调用可能会失败')
-    alert('未检测到登录token，请先登录系统')
-  } else {
-    console.log('[UserManage] Token验证:', {
-      token: token,
-      isValidFormat: token.split('.').length === 3,
-      tokenParts: token.split('.')
-    })
-  }
-  fetchUsers()
-  fetchRoles()
-  fetchUserStatistics()
+  fetchAll()
 })
 </script>
 
 <style scoped>
+.user-manage {
+  width: 100%;
+  padding: 24px 0 40px;
+  color: var(--text);
+}
+
+.hero-panel,
+.stats-grid,
+.filter-panel,
+.batch-bar,
+.table-panel,
+.pager,
+.modal-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 15, 30, 0.76);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+}
+
+.hero-panel,
+.filter-panel,
+.batch-bar,
+.table-panel,
+.pager {
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.hero-panel,
+.filter-panel,
+.batch-bar,
+.pager {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hero-panel h1 {
+  margin: 14px 0 10px;
+  font-size: 34px;
+}
+
+.hero-panel p {
+  margin: 0;
+  max-width: 760px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.panel-kicker {
+  display: inline-flex;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(120, 163, 255, 0.12);
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.hero-actions,
+.toolbar,
+.action-group,
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.stat-card {
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stat-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.stat-card strong {
+  display: block;
+  margin-top: 12px;
+  font-size: 34px;
+}
+
+.filter-panel,
+.batch-bar,
+.pager {
+  margin-top: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.field span {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field-grow {
+  flex: 1;
+}
+
+.input,
+.textarea {
+  min-height: 48px;
+  width: 100%;
+  padding: 0 14px;
+  border-radius: 16px;
+}
+
+.textarea {
+  min-height: 120px;
+  padding: 14px;
+  resize: vertical;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-icon {
+  min-height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
 .btn-primary {
-  @apply bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600 transition font-bold shadow flex items-center;
+  background: linear-gradient(135deg, rgba(120, 163, 255, 0.92), rgba(255, 123, 176, 0.78));
+  color: #fff;
 }
-.btn-secondary {
-  @apply bg-gray-500 text-white rounded px-4 py-2 hover:bg-gray-600 transition font-bold shadow flex items-center;
+
+.btn-secondary,
+.btn-icon {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.btn {
-  @apply bg-blue-500 text-white rounded px-3 py-1 hover:bg-blue-600 transition font-bold shadow;
+
+.btn-danger,
+.btn-icon.danger {
+  background: rgba(255, 128, 160, 0.12);
+  color: #ffc4d6;
+  border: 1px solid rgba(255, 128, 160, 0.18);
 }
-.btn-sm {
-  @apply px-2 py-1 text-sm;
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
-.btn-info {
-  @apply bg-blue-500 text-white hover:bg-blue-600;
+
+.table-panel {
+  margin-top: 18px;
+  overflow: auto;
 }
-.btn-success {
-  @apply bg-green-500 text-white hover:bg-green-600;
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
 }
-.btn-warning {
-  @apply bg-yellow-500 text-white hover:bg-yellow-600;
+
+.user-table th,
+.user-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  vertical-align: top;
 }
-.btn-danger {
-  @apply bg-red-500 text-white hover:bg-red-600;
+
+.user-table th {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
 }
-.input {
-  @apply border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200 transition w-full;
+
+.user-cell {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
-th, td {
+
+.user-cell strong,
+.meta-stack span,
+.detail-item strong {
+  display: block;
+}
+
+.user-cell span,
+.meta-stack span:first-child + span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.avatar.fallback {
+  display: grid;
+  place-items: center;
+  background: rgba(120, 163, 255, 0.22);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.pill,
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.pill.success {
+  background: rgba(115, 239, 198, 0.14);
+  color: var(--success);
+}
+
+.pill.danger {
+  background: rgba(255, 147, 183, 0.14);
+  color: var(--danger);
+}
+
+.pill.accent {
+  background: rgba(120, 163, 255, 0.14);
+  color: var(--accent);
+}
+
+.pill.muted,
+.role-pill.muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+}
+
+.role-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.role-pill {
+  background: rgba(103, 239, 216, 0.12);
+  color: var(--accent-3);
+}
+
+.meta-stack {
+  display: grid;
+  gap: 4px;
+}
+
+.empty-state {
+  padding: 28px 0;
   text-align: center;
-}
-.btn-sm {
-  @apply px-2 py-1 text-xs font-medium rounded-md transition-colors duration-200;
+  color: var(--muted);
 }
 
-.btn-sm.btn-success {
-  @apply bg-green-500 text-white hover:bg-green-600;
+.mobile-card-list {
+  display: none;
 }
 
-.btn-sm.btn-warning {
-  @apply bg-yellow-500 text-white hover:bg-yellow-600;
+.mobile-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 16px;
 }
 
-.btn-sm.btn-danger {
-  @apply bg-red-500 text-white hover:bg-red-600;
+.mobile-card-head,
+.mobile-pill-row,
+.mobile-check,
+.mobile-action-group {
+  display: flex;
 }
 
-.btn-sm.btn-info {
-  @apply bg-blue-500 text-white hover:bg-blue-600;
+.mobile-card-head,
+.mobile-action-group {
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.btn-sm.btn {
-  @apply bg-gray-500 text-white hover:bg-gray-600;
+.mobile-pill-row,
+.mobile-action-group {
+  flex-wrap: wrap;
 }
-</style> 
+
+.mobile-check {
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.mobile-user-head {
+  margin-top: 16px;
+}
+
+.mobile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.mobile-info-item,
+.mobile-section {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mobile-info-item span,
+.mobile-section-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mobile-section {
+  margin-top: 16px;
+}
+
+.mobile-action-group {
+  margin-top: 16px;
+}
+
+.page-size {
+  width: 88px;
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(2, 6, 18, 0.58);
+}
+
+.modal-card {
+  width: min(880px, 100%);
+  border-radius: 28px;
+  padding: 24px;
+}
+
+.detail-card {
+  width: min(720px, 100%);
+}
+
+.modal-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.modal-head h2 {
+  margin: 12px 0 0;
+}
+
+.form-grid,
+.detail-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.role-check-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.role-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.detail-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-item {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.detail-item span {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 960px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-panel,
+  .filter-panel,
+  .batch-bar,
+  .pager {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-grid,
+  .detail-grid,
+  .role-check-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-panel h1 {
+    font-size: 28px;
+  }
+
+  .hero-panel,
+  .filter-panel,
+  .batch-bar,
+  .table-panel,
+  .pager {
+    padding: 18px;
+  }
+
+  .stat-card {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .stat-card strong {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .user-manage {
+    padding-top: 6px;
+  }
+
+  .hero-panel,
+  .filter-panel,
+  .batch-bar,
+  .pager {
+    padding: 8px;
+    border-radius: 14px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin: 8px 0;
+  }
+
+  .table-panel {
+    padding: 8px;
+    border-radius: 14px;
+    margin-top: 10px;
+  }
+
+  .hero-panel p {
+    display: none;
+  }
+
+  .hero-panel h1 {
+    margin: 4px 0 0;
+    font-size: 18px;
+    line-height: 1.3;
+  }
+
+  .hero-actions {
+    gap: 6px;
+  }
+
+  .filter-panel {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    align-items: center;
+    gap: 6px;
+    scrollbar-width: thin;
+  }
+
+  .field {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 132px;
+  }
+
+  .field span {
+    display: none;
+  }
+
+  .toolbar {
+    width: auto;
+    gap: 6px;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+
+  .user-table-scroll {
+    display: block !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .user-table {
+    min-width: 980px;
+  }
+
+  .user-table th,
+  .user-table td {
+    padding: 6px 6px;
+    font-size: 11px;
+    line-height: 1.15;
+    vertical-align: middle;
+  }
+
+  .user-table th {
+    font-size: 10px;
+  }
+
+  .mobile-card-list {
+    display: none !important;
+  }
+
+  .stat-card {
+    min-height: 52px;
+    padding: 7px 6px;
+    border-radius: 12px;
+  }
+
+  .stat-card span {
+    font-size: 10px;
+  }
+
+  .stat-card strong {
+    margin-top: 4px;
+    font-size: 16px;
+  }
+
+  .hero-actions,
+  .toolbar,
+  .modal-actions {
+    width: 100%;
+  }
+
+  .hero-actions > *,
+  .toolbar > *,
+  .modal-actions > * {
+    flex: 0 0 auto;
+    min-width: 72px;
+  }
+
+  .modal-mask {
+    padding: 12px;
+  }
+
+  .modal-card {
+    padding: 18px;
+    border-radius: 24px;
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+  }
+
+  .input,
+  .textarea {
+    min-height: 34px;
+    padding: 0 9px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .textarea {
+    min-height: 92px;
+    padding: 10px;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-icon {
+    min-height: 28px;
+    padding: 0 8px;
+    border-radius: 12px;
+    font-size: 10px;
+  }
+
+  .user-cell {
+    gap: 6px;
+    align-items: center;
+  }
+
+  .user-cell strong {
+    font-size: 12px;
+    line-height: 1.1;
+  }
+
+  .user-cell span,
+  .meta-stack span:first-child + span {
+    font-size: 10px;
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .pill,
+  .role-pill {
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+
+  .action-group {
+    gap: 4px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
+  .role-list {
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .meta-stack {
+    gap: 2px;
+  }
+
+  .user-table td:nth-child(6),
+  .user-table td:nth-child(7),
+  .user-table td:nth-child(8),
+  .user-table td:nth-child(9),
+  .user-table td:nth-child(10),
+  .user-table th:nth-child(6),
+  .user-table th:nth-child(7),
+  .user-table th:nth-child(8),
+  .user-table th:nth-child(9),
+  .user-table th:nth-child(10) {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .hero-panel h1 {
+    font-size: 16px;
+  }
+
+  .panel-kicker {
+    font-size: 9px;
+  }
+
+  .stat-card strong {
+    font-size: 14px;
+  }
+
+  .mobile-card {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .mobile-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-action-group > * {
+    flex: 1 1 100%;
+  }
+
+  .avatar {
+    width: 22px;
+    height: 22px;
+  }
+}
+</style>
