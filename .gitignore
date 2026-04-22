@@ -18,7 +18,9 @@ backend/backend/.env
 backend/backend/.env.*
 !backend/backend/.env.example
 !backend/backend/.env.production.example
-backend/backend/uploads/
+backend/backend/uploads/*
+!backend/backend/uploads/home-cats/
+!backend/backend/uploads/home-cats/**
 backend/backend/logs/
 
 fontend/.env
