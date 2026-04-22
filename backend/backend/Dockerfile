@@ -13,8 +13,11 @@ RUN npm ci --omit=dev --no-audit --no-fund && \
 
 COPY . .
 
-RUN mkdir -p /app/uploads/images /app/uploads/avaters && \
-    chown -R node:node /app
+RUN mkdir -p /opt/bootstrap/home-cats && \
+    if [ -d /app/uploads/home-cats ]; then cp -R /app/uploads/home-cats/. /opt/bootstrap/home-cats/; fi && \
+    mkdir -p /app/uploads/images /app/uploads/avaters /app/uploads/home-cats && \
+    chmod +x /app/scripts/docker-entrypoint.sh && \
+    chown -R node:node /app /opt/bootstrap
 
 USER node
 
@@ -30,4 +33,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
         req.on('timeout', () => process.exit(1)); \
         req.end();"
 
+ENTRYPOINT ["sh", "/app/scripts/docker-entrypoint.sh"]
 CMD ["npm", "start"]

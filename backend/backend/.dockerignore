@@ -3,7 +3,9 @@ npm-debug.log
 .git
 .env
 .env.*
-uploads
+uploads/*
+!uploads/home-cats/
+!uploads/home-cats/**
 logs
 *.log
 Dockerfile.backup
