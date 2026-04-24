@@ -324,15 +324,17 @@ const fallbackSpeechTexts = [
 
 const moods = ['巡航', '跃迁', '吸睛中', '待机', '高能展示']
 
+const fallbackHomeCatBase = '/uploads/home-cats'
+
 const fallbackCatSources: CatSource[] = [
-  { id: 'cat-1', label: 'Orange-1', src: new URL('../assets/cat-images/orange-1.png', import.meta.url).href, speechText: fallbackSpeechTexts[0], isFeatured: true },
-  { id: 'cat-2', label: 'Orange-2', src: new URL('../assets/cat-images/orange-2.png', import.meta.url).href, speechText: fallbackSpeechTexts[1] },
-  { id: 'cat-3', label: 'Orange-3', src: new URL('../assets/cat-images/orange-3.png', import.meta.url).href, speechText: fallbackSpeechTexts[2] },
-  { id: 'cat-4', label: 'Orange-4', src: new URL('../assets/cat-images/orange-4.png', import.meta.url).href, speechText: fallbackSpeechTexts[3] },
-  { id: 'cat-5', label: 'Orange-5', src: new URL('../assets/cat-images/orange-5.png', import.meta.url).href, speechText: fallbackSpeechTexts[4] },
-  { id: 'cat-6', label: 'Orange-6', src: new URL('../assets/cat-images/orange-6.png', import.meta.url).href, speechText: fallbackSpeechTexts[5] },
-  { id: 'cat-7', label: '625-1', src: new URL('../assets/cat-images/625-1.png', import.meta.url).href, speechText: fallbackSpeechTexts[6] },
-  { id: 'cat-8', label: '625-2', src: new URL('../assets/cat-images/625-2.png', import.meta.url).href, speechText: fallbackSpeechTexts[7] }
+  { id: 'cat-1', label: 'Orange-1', src: `${fallbackHomeCatBase}/orange-1.png`, speechText: fallbackSpeechTexts[0], isFeatured: true },
+  { id: 'cat-2', label: 'Orange-2', src: `${fallbackHomeCatBase}/orange-2.png`, speechText: fallbackSpeechTexts[1] },
+  { id: 'cat-3', label: 'Orange-3', src: `${fallbackHomeCatBase}/orange-3.png`, speechText: fallbackSpeechTexts[2] },
+  { id: 'cat-4', label: 'Orange-4', src: `${fallbackHomeCatBase}/orange-4.png`, speechText: fallbackSpeechTexts[3] },
+  { id: 'cat-5', label: 'Orange-5', src: `${fallbackHomeCatBase}/orange-5.png`, speechText: fallbackSpeechTexts[4] },
+  { id: 'cat-6', label: 'Orange-6', src: `${fallbackHomeCatBase}/orange-6.png`, speechText: fallbackSpeechTexts[5] },
+  { id: 'cat-7', label: '625-1', src: `${fallbackHomeCatBase}/625-1.png`, speechText: fallbackSpeechTexts[6] },
+  { id: 'cat-8', label: '625-2', src: `${fallbackHomeCatBase}/625-2.png`, speechText: fallbackSpeechTexts[7] }
 ]
 
 const orbitTrails: OrbitTrail[] = [
