@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { AUTH_EXPIRED_EVENT } from '@/store/user'
+import { resolveDisplayMessage } from '@/utils/message'
 
 const apiBaseURL = import.meta?.env?.VITE_API_BASE_URL || '/'
 
@@ -72,7 +73,14 @@ async function refreshSessionOnce() {
 }
 
 instance.interceptors.response.use(
-  response => response.data,
+  response => {
+    if (response?.data && typeof response.data === 'object' && 'message' in response.data) {
+      const payload = response.data as { code?: number; message?: string }
+      const fallback = payload.code === 0 ? '操作成功' : '请求失败'
+      payload.message = resolveDisplayMessage(payload.message, fallback)
+    }
+    return response.data
+  },
   async (error: AxiosError) => {
     const status = error.response?.status
     const originalRequest = error.config as RetryableConfig | undefined
@@ -98,10 +106,11 @@ instance.interceptors.response.use(
       notifyAuthExpired()
     }
 
-    const message =
-      (error.response?.data as { message?: string } | undefined)?.message ||
-      error.message ||
-      '请求失败'
+    const responseData = error.response?.data as { message?: string } | undefined
+    const message = resolveDisplayMessage(
+      responseData?.message || error.message,
+      status && status >= 500 ? '服务器开小差了，请稍后再试' : '请求失败'
+    )
     console.error('[API Error]', message)
 
     return Promise.reject(error)

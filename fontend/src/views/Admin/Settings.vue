@@ -51,7 +51,7 @@
               />
             </label>
 
-            <label class="field-block">
+            <div class="field-block asset-field">
               <span>Logo URL</span>
               <input
                 v-model.trim="settings.logoURL"
@@ -60,9 +60,27 @@
                 maxlength="500"
                 placeholder="请输入 Logo 图片地址"
               />
-            </label>
+              <div class="asset-actions">
+                <button type="button" class="btn-secondary" :disabled="uploadingAssetField === 'logoURL'" @click="triggerAssetUpload('logoURL')">
+                  {{ uploadingAssetField === 'logoURL' ? '上传中...' : '上传图片' }}
+                </button>
+                <button type="button" class="btn-secondary" @click="openAssetPicker('logoURL')">
+                  从附件库选择
+                </button>
+                <button type="button" class="btn-danger" :disabled="!settings.logoURL" @click="clearAssetField('logoURL')">
+                  清空
+                </button>
+              </div>
+              <div v-if="settings.logoURL" class="asset-preview-card">
+                <img :src="resolveAssetPreview(settings.logoURL)" alt="Logo 预览" class="asset-preview-image" />
+                <div class="asset-preview-copy">
+                  <strong>当前 Logo 预览</strong>
+                  <span>{{ settings.logoURL }}</span>
+                </div>
+              </div>
+            </div>
 
-            <label class="field-block">
+            <div class="field-block asset-field">
               <span>Favicon URL</span>
               <input
                 v-model.trim="settings.faviconURL"
@@ -71,7 +89,26 @@
                 maxlength="500"
                 placeholder="请输入 Favicon 图片地址"
               />
-            </label>
+              <div class="asset-actions">
+                <button type="button" class="btn-secondary" :disabled="uploadingAssetField === 'faviconURL'" @click="triggerAssetUpload('faviconURL')">
+                  {{ uploadingAssetField === 'faviconURL' ? '上传中...' : '上传图片' }}
+                </button>
+                <button type="button" class="btn-secondary" @click="openAssetPicker('faviconURL')">
+                  从附件库选择
+                </button>
+                <button type="button" class="btn-danger" :disabled="!settings.faviconURL" @click="clearAssetField('faviconURL')">
+                  清空
+                </button>
+              </div>
+              <p class="section-desc">建议使用正方形图片，优先 PNG 或 SVG。</p>
+              <div v-if="settings.faviconURL" class="asset-preview-card favicon-preview-card">
+                <img :src="resolveAssetPreview(settings.faviconURL)" alt="Favicon 预览" class="asset-preview-image favicon-preview-image" />
+                <div class="asset-preview-copy">
+                  <strong>当前 Favicon 预览</strong>
+                  <span>{{ settings.faviconURL }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -281,7 +318,69 @@
             </div>
           </div>
         </section>
+
+        <input
+          ref="assetUploadInput"
+          type="file"
+          accept="image/*"
+          class="sr-only"
+          @change="handleAssetFileChange"
+        />
       </form>
+    </div>
+
+    <div v-if="assetPickerOpen" class="asset-picker-mask">
+      <div class="asset-picker-dialog">
+        <div class="asset-picker-head">
+          <div>
+            <h3 class="text-lg font-bold text-gray-800">选择图片</h3>
+            <p class="section-desc">从附件库选择一张图片作为{{ assetPickerTargetLabel }}。</p>
+          </div>
+          <button type="button" class="btn-danger px-3" @click="closeAssetPicker">关闭</button>
+        </div>
+
+        <div class="asset-picker-toolbar">
+          <input
+            v-model.trim="assetPickerKeyword"
+            type="text"
+            class="input flex-1"
+            placeholder="按文件名搜索图片"
+            @keyup.enter="fetchAttachmentLibrary"
+          />
+          <button type="button" class="btn-secondary" :disabled="assetPickerLoading" @click="fetchAttachmentLibrary">
+            {{ assetPickerLoading ? '加载中...' : '搜索' }}
+          </button>
+        </div>
+
+        <div v-if="assetPickerError" class="status-banner error-banner">
+          {{ assetPickerError }}
+        </div>
+
+        <div v-if="assetPickerLoading" class="loading-state">
+          正在加载附件库...
+        </div>
+
+        <div v-else-if="!assetPickerItems.length" class="empty-hint compact-empty">
+          暂无可选图片。
+        </div>
+
+        <div v-else class="asset-library-grid">
+          <button
+            v-for="item in assetPickerItems"
+            :key="item.AttachmentID"
+            type="button"
+            class="asset-library-card"
+            @click="selectAssetFromLibrary(item)"
+          >
+            <img :src="resolveAttachmentItemPreview(item)" :alt="item.OriginalName || '附件预览'" class="asset-library-image" />
+            <div class="asset-library-copy">
+              <strong>{{ item.OriginalName || `附件 #${item.AttachmentID}` }}</strong>
+              <span>{{ item.MimeType }}</span>
+              <span>{{ formatFileSize(item.FileSize) }}</span>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -290,6 +389,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { getSettings, updateSettings, sendTestEmail as sendTestEmailApi } from '@/api/settings'
 import { clearPublicRedisCache, getRedisHealth, getRedisStats } from '@/api/redis'
+import { getAttachmentPreviewInfo, getAttachments, uploadAttachment } from '@/api/attachments'
+import { useSettingsStore } from '@/store/user'
+import { broadcastSiteBranding } from '@/utils/siteBranding'
 
 function createDefaultSettings() {
   return {
@@ -406,6 +508,34 @@ function mapSettingsPayload(payload = {}) {
   }
 }
 
+function resolveAssetPreview(url) {
+  return String(url || '').trim()
+}
+
+function isImageAttachment(item) {
+  return String(item?.MimeType || '').toLowerCase().startsWith('image/')
+}
+
+function buildAttachmentPreviewFallback(attachmentId) {
+  return attachmentId ? `/api/attachments/${attachmentId}/preview` : ''
+}
+
+async function resolveAttachmentPreviewURL(attachment) {
+  const attachmentId = Number(attachment?.AttachmentID || 0)
+  if (!attachmentId) return ''
+
+  try {
+    const res = await getAttachmentPreviewInfo(attachmentId)
+    if (res.code === 0) {
+      return String(res.data?.previewUrl || res.data?.downloadUrl || buildAttachmentPreviewFallback(attachmentId))
+    }
+  } catch (error) {
+    console.error('[Settings.vue] 获取附件预览地址失败:', error)
+  }
+
+  return buildAttachmentPreviewFallback(attachmentId)
+}
+
 function mapRedisHealth(payload = {}) {
   const defaults = createDefaultRedisHealth()
 
@@ -474,9 +604,19 @@ function mapRedisStats(payload = {}) {
 }
 
 const settings = ref(createDefaultSettings())
+const settingsStore = useSettingsStore()
 const loading = ref(false)
 const loadError = ref('')
 const saving = ref(false)
+const assetUploadInput = ref(null)
+const activeUploadField = ref('')
+const uploadingAssetField = ref('')
+const assetPickerOpen = ref(false)
+const assetPickerTarget = ref('')
+const assetPickerLoading = ref(false)
+const assetPickerError = ref('')
+const assetPickerKeyword = ref('')
+const assetPickerItems = ref([])
 const testEmail = ref('')
 const testingEmail = ref(false)
 const redisLoading = ref(false)
@@ -579,6 +719,7 @@ const redisGroupCards = computed(() => {
 })
 
 const redisRecentInvalidations = computed(() => redisStats.value.recentInvalidations || [])
+const assetPickerTargetLabel = computed(() => assetPickerTarget.value === 'faviconURL' ? 'Favicon' : 'Logo')
 
 async function fetchSettings() {
   loading.value = true
@@ -672,6 +813,110 @@ function buildSubmitPayload() {
   }
 }
 
+function clearAssetField(field) {
+  settings.value[field] = ''
+}
+
+function triggerAssetUpload(field) {
+  activeUploadField.value = field
+  assetUploadInput.value?.click()
+}
+
+async function handleAssetFileChange(event) {
+  const input = event?.target
+  const file = input?.files?.[0]
+  const field = activeUploadField.value
+
+  if (!file || !field) {
+    if (input) input.value = ''
+    return
+  }
+
+  uploadingAssetField.value = field
+
+  try {
+    const uploadRes = await uploadAttachment(file, {
+      description: `site-branding:${field}`,
+      compress: false
+    })
+
+    if (uploadRes.code !== 0) {
+      throw new Error(uploadRes.message || '上传图片失败')
+    }
+
+    const previewURL = await resolveAttachmentPreviewURL(uploadRes.data)
+    if (!previewURL) {
+      throw new Error('上传成功，但未能获取图片预览地址')
+    }
+
+    settings.value[field] = previewURL
+    window.alert(`${field === 'faviconURL' ? 'Favicon' : 'Logo'} 图片上传成功，记得点击“保存设置”后才会写入数据库`)
+  } catch (error) {
+    console.error('[Settings.vue] 上传站点图片失败:', error)
+    window.alert(error?.response?.data?.message || error?.message || '上传图片失败，请稍后重试')
+  } finally {
+    if (input) input.value = ''
+    uploadingAssetField.value = ''
+    activeUploadField.value = ''
+  }
+}
+
+function closeAssetPicker() {
+  assetPickerOpen.value = false
+  assetPickerTarget.value = ''
+  assetPickerError.value = ''
+}
+
+async function fetchAttachmentLibrary() {
+  assetPickerLoading.value = true
+  assetPickerError.value = ''
+
+  try {
+    const res = await getAttachments({
+      page: 1,
+      pageSize: 80,
+      keyword: assetPickerKeyword.value.trim() || undefined
+    })
+
+    if (res.code !== 0) {
+      throw new Error(res.message || '加载附件库失败')
+    }
+
+    assetPickerItems.value = (res.data?.list || []).filter(isImageAttachment)
+  } catch (error) {
+    console.error('[Settings.vue] 获取附件库失败:', error)
+    assetPickerItems.value = []
+    assetPickerError.value = error?.response?.data?.message || error?.message || '加载附件库失败，请稍后重试'
+  } finally {
+    assetPickerLoading.value = false
+  }
+}
+
+async function openAssetPicker(field) {
+  assetPickerTarget.value = field
+  assetPickerOpen.value = true
+  await fetchAttachmentLibrary()
+}
+
+async function selectAssetFromLibrary(item) {
+  try {
+    const previewURL = await resolveAttachmentPreviewURL(item)
+    if (!previewURL) {
+      throw new Error('未能获取附件预览地址')
+    }
+
+    settings.value[assetPickerTarget.value] = previewURL
+    closeAssetPicker()
+  } catch (error) {
+    console.error('[Settings.vue] 选择附件失败:', error)
+    assetPickerError.value = error?.response?.data?.message || error?.message || '选择附件失败，请稍后重试'
+  }
+}
+
+function resolveAttachmentItemPreview(item) {
+  return buildAttachmentPreviewFallback(item?.AttachmentID)
+}
+
 async function saveSettings() {
   saving.value = true
 
@@ -682,7 +927,9 @@ async function saveSettings() {
     }
 
     settings.value = mapSettingsPayload(res.data || {})
+    settingsStore.applyPublicSettings(res.data || {})
     loadError.value = ''
+    broadcastSiteBranding(res.data || {})
     fetchRedisDiagnostics()
     window.alert('系统设置保存成功')
   } catch (error) {
@@ -734,6 +981,13 @@ function formatDisplayDate(value) {
 
 function formatNumber(value) {
   return new Intl.NumberFormat('zh-CN').format(toSafeNumber(value))
+}
+
+function formatFileSize(value) {
+  const size = toSafeNumber(value)
+  if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(2)} MB`
+  if (size >= 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${size} B`
 }
 
 function formatPercent(value) {
@@ -820,6 +1074,152 @@ onMounted(() => {
   font-size: 0.9rem;
   font-weight: 600;
   color: #374151;
+}
+
+.asset-field {
+  align-content: start;
+}
+
+.asset-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.asset-preview-card {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.85rem 0.95rem;
+  border-radius: 1rem;
+  border: 1px solid #dbeafe;
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.9), rgba(248, 250, 252, 0.96));
+}
+
+.favicon-preview-card {
+  grid-template-columns: 64px minmax(0, 1fr);
+}
+
+.asset-preview-image {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 0.9rem;
+  border: 1px solid #bfdbfe;
+  background: #ffffff;
+  padding: 0.5rem;
+}
+
+.favicon-preview-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 0.8rem;
+}
+
+.asset-preview-copy {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.asset-preview-copy strong {
+  color: #111827;
+}
+
+.asset-preview-copy span {
+  color: #6b7280;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  word-break: break-all;
+}
+
+.asset-picker-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.asset-picker-dialog {
+  width: min(1080px, 100%);
+  max-height: min(88vh, 920px);
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 1.25rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+.asset-picker-head,
+.asset-picker-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.asset-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.95rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.asset-library-card {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.85rem;
+  text-align: left;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.asset-library-card:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.12);
+  transform: translateY(-1px);
+}
+
+.asset-library-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 0.9rem;
+  border: 1px solid #dbeafe;
+  background: #ffffff;
+  padding: 0.5rem;
+}
+
+.asset-library-copy {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.asset-library-copy strong {
+  color: #111827;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.asset-library-copy span {
+  color: #6b7280;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  word-break: break-all;
 }
 
 .info-card {
@@ -993,7 +1393,10 @@ onMounted(() => {
   .redis-actions,
   .invalidation-row,
   .social-link-row,
-  .email-test-row {
+  .email-test-row,
+  .asset-actions,
+  .asset-picker-head,
+  .asset-picker-toolbar {
     flex-direction: column;
     align-items: stretch;
   }
@@ -1014,8 +1417,34 @@ onMounted(() => {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .asset-preview-card,
+  .favicon-preview-card {
+    grid-template-columns: 1fr;
+  }
+
+  .asset-preview-image,
+  .favicon-preview-image {
+    width: 72px;
+    height: 72px;
+  }
+
+  .asset-picker-mask {
+    padding: 0.75rem;
+  }
+
+  .asset-picker-dialog {
+    max-height: 90vh;
+    padding: 1rem;
+  }
+
+  .asset-library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .social-link-row > *,
-  .email-test-row > * {
+  .email-test-row > *,
+  .asset-actions > *,
+  .asset-picker-toolbar > * {
     width: 100%;
   }
 

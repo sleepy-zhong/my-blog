@@ -5,6 +5,10 @@ export function getSettings() {
   return instance.get('/api/settings')
 }
 
+export function getPublicSettings() {
+  return instance.get('/api/settings/public')
+}
+
 export function updateSettings(data: UnknownData) {
   return instance.put('/api/settings', data)
 }

@@ -261,6 +261,7 @@ exports.getArticles = async (req, res) => {
       include = 'categories,tags,user',
       sort
     } = req.query;
+    const readableStatus = resolveReadableArticleStatus(status, req.user);
 
     // 字段白名单（来自模型定义）与 include 白名单
     const allowedFields = Object.keys(Article.rawAttributes || {});
@@ -298,7 +299,7 @@ exports.getArticles = async (req, res) => {
 
     // 构建 where 条件
     const where = {};
-    if (status) where.Status = status;
+    if (readableStatus) where.Status = readableStatus;
     if (keyword) {
       where[Op.or] = [
         { Title: { [Op.like]: `%${keyword}%` } },
@@ -770,6 +771,7 @@ exports.getArticlesCount = async (req, res) => {
       categoryMode = 'any',
       tagMode = 'any'
     } = req.query;
+    const readableStatus = resolveReadableArticleStatus(status, req.user);
 
     const categoryIds = categories ? String(categories).split(',').map(s => parseInt(s, 10)).filter(n => !isNaN(n))
                                    : (category ? [parseInt(category, 10)].filter(n => !isNaN(n)) : []);
@@ -777,7 +779,7 @@ exports.getArticlesCount = async (req, res) => {
                          : (tag ? [parseInt(tag, 10)].filter(n => !isNaN(n)) : []);
 
     const where = {};
-    if (status) where.Status = status;
+    if (readableStatus) where.Status = readableStatus;
     if (keyword) {
       where[Op.or] = [
         { Title: { [Op.like]: `%${keyword}%` } },
@@ -1040,6 +1042,20 @@ function bumpArticleDetailViewCount(data) {
   }
 
   return responseData;
+}
+
+function canReadNonPublishedArticles(user) {
+  if (!user) return false;
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  return roles.includes('admin') || roles.includes('editor');
+}
+
+function resolveReadableArticleStatus(status, user) {
+  if (!canReadNonPublishedArticles(user)) {
+    return 'published';
+  }
+
+  return status || 'published';
 }
 
 function buildArticleDetailCacheKey(where, query) {

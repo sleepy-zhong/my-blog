@@ -12,20 +12,20 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-INSERT INTO `roles` (`RoleID`, `Name`, `Description`) VALUES (1, 'admin', '超级管理员');
+INSERT INTO `roles` (`RoleID`, `Name`, `Description`) VALUES (1, 'admin', '系统管理员');
 INSERT INTO `roles` (`RoleID`, `Name`, `Description`) VALUES (2, 'editor', '内容编辑');
-INSERT INTO `roles` (`RoleID`, `Name`, `Description`) VALUES (3, 'author', '普通作者');
+INSERT INTO `roles` (`RoleID`, `Name`, `Description`) VALUES (3, 'author', '文章作者');
 INSERT INTO `roles` (`RoleID`, `Name`, `Description`) VALUES (4, 'user', '普通用户');
-INSERT INTO `roles` (`RoleID`, `Name`, `Description`) VALUES (14, 'viewer', '游客');
+INSERT INTO `roles` (`RoleID`, `Name`, `Description`) VALUES (14, 'viewer', '访客');
 
 -- ----------------------------
 -- Records of users
 -- ----------------------------
-INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (1, '19123635145', 'sleepyzhong', 'alice@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Sleepyzhong', '我是大聪明，喜欢折腾前端动效、后端接口和猫猫主题设计。', NULL, '2026-04-01 09:00:00', '2026-04-10 09:15:00', 1);
-INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (2, '13800000002', 'bob', 'bob@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Bob', '后端工程师，主要负责接口、权限和数据库设计。', NULL, '2026-04-01 09:10:00', '2026-04-10 08:40:00', 1);
-INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (3, '13800000003', 'charlie', 'charlie@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Charlie', '全栈开发者，关注 Vue、Node.js 和工程化。', NULL, '2026-04-01 09:20:00', '2026-04-09 22:10:00', 1);
-INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (4, '13800000004', 'david', 'david@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'David', '测试工程师，负责回归验证和边界场景排查。', NULL, '2026-04-01 09:30:00', '2026-04-09 21:05:00', 1);
-INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (5, '13800000005', 'admin', 'admin@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '管理员', '系统管理员账号，用于本地联调与后台验收。', NULL, '2026-04-01 09:40:00', '2026-04-10 10:00:00', 1);
+INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (1, '19123635145', 'sleepyzhong', 'alice@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Sleepyzhong', '喜欢记录开发过程，也会把踩坑和修复方案整理成文档。', NULL, '2026-04-01 09:00:00', '2026-04-10 09:15:00', 1);
+INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (2, '13800000002', 'bob', 'bob@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Bob', '后端开发爱好者，偏爱接口设计和服务稳定性。', NULL, '2026-04-01 09:10:00', '2026-04-10 08:40:00', 1);
+INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (3, '13800000003', 'charlie', 'charlie@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Charlie', '主要关注 Vue、Node.js 和工程化实践。', NULL, '2026-04-01 09:20:00', '2026-04-09 22:10:00', 1);
+INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (4, '13800000004', 'david', 'david@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'David', '日常会整理前端问题，也会帮忙验证交互细节。', NULL, '2026-04-01 09:30:00', '2026-04-09 21:05:00', 1);
+INSERT INTO `users` (`UserID`, `PhoneNumber`, `Username`, `Email`, `PasswordHash`, `DisplayName`, `Bio`, `AvatarURL`, `CreatedAt`, `LastLogin`, `IsActive`) VALUES (5, '13800000005', 'admin', 'admin@example.com', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '管理员', '负责维护本地演示环境和后台基础配置。', NULL, '2026-04-01 09:40:00', '2026-04-10 10:00:00', 1);
 
 -- ----------------------------
 -- Records of userroles
@@ -41,144 +41,220 @@ INSERT INTO `userroles` (`UserID`, `RoleID`) VALUES (5, 1);
 -- ----------------------------
 -- Records of categories
 -- ----------------------------
-INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (1, '前端', '界面、交互与体验优化', NULL, 1, '2026-04-01 10:00:00', '2026-04-01 10:00:00');
-INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (2, '后端', '接口、鉴权与服务设计', NULL, 1, '2026-04-01 10:01:00', '2026-04-01 10:01:00');
-INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (3, '数据库', '表结构、索引与 SQL 实战', NULL, 1, '2026-04-01 10:02:00', '2026-04-01 10:02:00');
-INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (4, '实战', '本地联调、部署与排障记录', NULL, 1, '2026-04-01 10:03:00', '2026-04-01 10:03:00');
-INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (5, '随笔', '项目中的灵感、复盘与记录', NULL, 1, '2026-04-01 10:04:00', '2026-04-01 10:04:00');
+INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (1, '前端', '记录前端开发经验与页面交互优化。', NULL, 1, '2026-04-01 10:00:00', '2026-04-01 10:00:00');
+INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (2, '后端', '记录接口设计、权限和服务端问题处理。', NULL, 1, '2026-04-01 10:01:00', '2026-04-01 10:01:00');
+INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (3, '数据库', '整理 MySQL、表结构和 SQL 排查经验。', NULL, 1, '2026-04-01 10:02:00', '2026-04-01 10:02:00');
+INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (4, '运维', '记录部署、代理、环境变量和排障过程。', NULL, 1, '2026-04-01 10:03:00', '2026-04-01 10:03:00');
+INSERT INTO `categories` (`CategoryID`, `Name`, `Description`, `ParentCategoryID`, `CreatedBy`, `CreatedAt`, `UpdatedAt`) VALUES (5, '随笔', '一些产品想法、界面调整和项目更新说明。', NULL, 1, '2026-04-01 10:04:00', '2026-04-01 10:04:00');
 
 -- ----------------------------
 -- Records of tags
 -- ----------------------------
-INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (1, 'Vue3', '组合式 API 与页面交互', 1, '2026-04-01 10:10:00');
-INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (2, 'Express', 'Node.js 服务端接口', 1, '2026-04-01 10:11:00');
-INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (3, 'MySQL', '数据库与 SQL', 1, '2026-04-01 10:12:00');
-INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (4, 'Spring Boot', 'Java 后端开发', 1, '2026-04-01 10:13:00');
-INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (5, 'JavaScript', '语言特性与工程实践', 1, '2026-04-01 10:14:00');
-INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (6, '猫猫主题', '与猫猫元素相关的视觉设计', 1, '2026-04-01 10:15:00');
-INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (7, '权限鉴权', '登录、游客与授权排查', 1, '2026-04-01 10:16:00');
-INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (8, '本地开发', '环境配置与联调', 1, '2026-04-01 10:17:00');
+INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (1, 'Vue3', '组合式 API 和组件开发实践。', 1, '2026-04-01 10:10:00');
+INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (2, 'Express', 'Node.js 服务端接口开发。', 1, '2026-04-01 10:11:00');
+INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (3, 'MySQL', '数据库设计与 SQL 排查。', 1, '2026-04-01 10:12:00');
+INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (4, 'Spring Boot', 'Java 后端项目经验整理。', 1, '2026-04-01 10:13:00');
+INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (5, 'JavaScript', '语言基础与常见陷阱总结。', 1, '2026-04-01 10:14:00');
+INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (6, '界面优化', '页面布局、视觉与交互调整。', 1, '2026-04-01 10:15:00');
+INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (7, '权限控制', '登录鉴权、会话和访问控制。', 1, '2026-04-01 10:16:00');
+INSERT INTO `tags` (`TagID`, `Name`, `Description`, `CreatedBy`, `CreatedAt`) VALUES (8, '排障记录', '问题复盘与修复过程。', 1, '2026-04-01 10:17:00');
+
+-- ----------------------------
+-- Home cat defaults
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `homecats` (
+  `HomeCatID` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(80) NOT NULL,
+  `Label` varchar(80) NOT NULL,
+  `SpeechText` varchar(500) NOT NULL,
+  `ImageURL` varchar(500) NOT NULL,
+  `SortOrder` int NOT NULL DEFAULT 0,
+  `IsActive` tinyint(1) NOT NULL DEFAULT 1,
+  `IsFeatured` tinyint(1) NOT NULL DEFAULT 0,
+  `CreatedBy` int NOT NULL,
+  `CreatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `UpdatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`HomeCatID`) USING BTREE,
+  INDEX `idx_homecats_active_sort` (`IsActive`, `IsFeatured`, `SortOrder`) USING BTREE,
+  INDEX `idx_homecats_creator` (`CreatedBy`) USING BTREE,
+  CONSTRAINT `fk_homecats_user`
+    FOREIGN KEY (`CreatedBy`) REFERENCES `users` (`UserID`)
+    ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @HomeCatAuthorId := COALESCE(
+  (SELECT `UserID` FROM `users` WHERE `Username` = 'sleepyzhong' LIMIT 1),
+  (SELECT `UserID` FROM `users` WHERE `Username` = 'admin' LIMIT 1),
+  (SELECT MIN(`UserID`) FROM `users`)
+);
+
+INSERT INTO `homecats` (`Name`, `Label`, `SpeechText`, `ImageURL`, `SortOrder`, `IsActive`, `IsFeatured`, `CreatedBy`)
+SELECT 'Orange-1', 'Orange-1', 'Meow. Welcome to the nebula.', '/uploads/home-cats/orange-1.png', 1, 1, 1, @HomeCatAuthorId
+FROM DUAL
+WHERE @HomeCatAuthorId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM `homecats` WHERE `Name` = 'Orange-1');
+
+INSERT INTO `homecats` (`Name`, `Label`, `SpeechText`, `ImageURL`, `SortOrder`, `IsActive`, `IsFeatured`, `CreatedBy`)
+SELECT 'Orange-2', 'Orange-2', 'Pat the cat, then read the post.', '/uploads/home-cats/orange-2.png', 2, 1, 0, @HomeCatAuthorId
+FROM DUAL
+WHERE @HomeCatAuthorId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM `homecats` WHERE `Name` = 'Orange-2');
+
+INSERT INTO `homecats` (`Name`, `Label`, `SpeechText`, `ImageURL`, `SortOrder`, `IsActive`, `IsFeatured`, `CreatedBy`)
+SELECT 'Orange-3', 'Orange-3', 'Signal locked. Cozy mode online.', '/uploads/home-cats/orange-3.png', 3, 1, 0, @HomeCatAuthorId
+FROM DUAL
+WHERE @HomeCatAuthorId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM `homecats` WHERE `Name` = 'Orange-3');
+
+INSERT INTO `homecats` (`Name`, `Label`, `SpeechText`, `ImageURL`, `SortOrder`, `IsActive`, `IsFeatured`, `CreatedBy`)
+SELECT 'Orange-4', 'Orange-4', 'Fresh stories detected ahead.', '/uploads/home-cats/orange-4.png', 4, 1, 0, @HomeCatAuthorId
+FROM DUAL
+WHERE @HomeCatAuthorId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM `homecats` WHERE `Name` = 'Orange-4');
+
+INSERT INTO `homecats` (`Name`, `Label`, `SpeechText`, `ImageURL`, `SortOrder`, `IsActive`, `IsFeatured`, `CreatedBy`)
+SELECT 'Orange-5', 'Orange-5', 'Keep scrolling, more cats await.', '/uploads/home-cats/orange-5.png', 5, 1, 0, @HomeCatAuthorId
+FROM DUAL
+WHERE @HomeCatAuthorId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM `homecats` WHERE `Name` = 'Orange-5');
+
+INSERT INTO `homecats` (`Name`, `Label`, `SpeechText`, `ImageURL`, `SortOrder`, `IsActive`, `IsFeatured`, `CreatedBy`)
+SELECT 'Orange-6', 'Orange-6', 'Night watch cat on duty.', '/uploads/home-cats/orange-6.png', 6, 1, 0, @HomeCatAuthorId
+FROM DUAL
+WHERE @HomeCatAuthorId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM `homecats` WHERE `Name` = 'Orange-6');
+
+INSERT INTO `homecats` (`Name`, `Label`, `SpeechText`, `ImageURL`, `SortOrder`, `IsActive`, `IsFeatured`, `CreatedBy`)
+SELECT '625-1', '625-1', 'Orbit stable. Reading route clear.', '/uploads/home-cats/625-1.png', 7, 1, 0, @HomeCatAuthorId
+FROM DUAL
+WHERE @HomeCatAuthorId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM `homecats` WHERE `Name` = '625-1');
+
+INSERT INTO `homecats` (`Name`, `Label`, `SpeechText`, `ImageURL`, `SortOrder`, `IsActive`, `IsFeatured`, `CreatedBy`)
+SELECT '625-2', '625-2', 'Meow. Docking complete.', '/uploads/home-cats/625-2.png', 8, 1, 0, @HomeCatAuthorId
+FROM DUAL
+WHERE @HomeCatAuthorId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM `homecats` WHERE `Name` = '625-2');
 
 -- ----------------------------
 -- Records of posts
 -- ----------------------------
-INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (1, 1, '猫猫主题站点改版记录', 'cat-theme-update-log', '# 猫猫主题站点改版记录
+INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (1, 1, '首页猫咪主题更新记录', 'cat-theme-update-log', '# 首页猫咪主题更新记录
 
-这次改版的目标很直接：保留猫猫元素，但不要只是把猫咪贴图堆在页面上，而是让导航、首屏、滚动节奏和文章卡片统一到同一套视觉语言里。
+这次首页改版重点放在猫咪插画、首屏氛围和文章入口的平衡上，希望页面更有记忆点，也方便继续扩展后续活动素材。
 
-## 这次改了什么
+## 这次调整了什么
 
-- 首页首屏改成沉浸式全屏布局，猫猫光斑、流体背景和悬浮粒子共同构成第一屏的氛围。
-- 导航栏和首页主体共用一组主题变量，解决了顶部和正文区域色差明显的问题。
-- 文章列表不再是静态堆叠，而是通过滚动分屏把“首屏展示”和“最新文章”串起来。
+- 重新梳理了首页视觉层次，让插画和正文入口不会互相抢焦点
+- 把猫咪素材拆成可管理的数据项，方便后台继续维护
+- 优化了首页卡片和列表的留白，让阅读节奏更舒服
 
-## 交互设计上的取舍
+## 接下来准备做什么
 
-1. 动效必须服务阅读，而不是抢内容。
-2. 保留猫猫元素，但控制它的密度，避免喧宾夺主。
-3. 所有动态效果都要在桌面端和移动端都能稳定工作。
+1. 继续补齐后台管理入口
+2. 统一首页和文章详情页的视觉语言
+3. 给移动端补上更稳定的适配方案
 
-## 后续计划
+## 小结
 
-下一步会继续补齐首页卡片切换、文章区块滑入和主题联动，让整站体验更完整。', '保留猫猫元素的同时，让首页动效、导航和内容区统一成同一套主题语言。', 'published', '2026-04-08 20:00:00', '2026-04-10 10:30:00', '2026-04-09 09:00:00', 28, NULL, NULL);
-INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (2, 1, '前后端本地启动指南', 'local-dev-guide', '# 前后端本地启动指南
+这次先把基础风格打稳，后面再继续补动态效果和内容运营能力。', '记录首页猫咪主题改版的方向、拆分方式和后续计划。', 'published', '2026-04-08 20:00:00', '2026-04-10 10:30:00', '2026-04-09 09:00:00', 28, NULL, NULL);
+INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (2, 1, '本地开发环境快速说明', 'local-dev-guide', '# 本地开发环境快速说明
 
-这份说明用于本机联调当前项目，默认环境如下：
+为了让本地联调更顺畅，项目里把常用端口和初始化步骤做了统一约定。
 
 - MySQL：`localhost:3307`
 - 数据库：`techblogdb`
-- 数据库账号：`root / root123`
+- 默认账号：`root / root123`
 - 后端端口：`3001`
 - 前端端口：`5173`
 
-## 推荐顺序
+## 初始化步骤
 
-1. 先在 `techblogdb` 库中导入 `backend/backend/database/01-init.sql`。
-2. 在 `backend/backend` 目录安装依赖并启动服务。
-3. 在 `fontend` 目录安装依赖并启动 Vite。
+1. 先创建 `techblogdb`，再执行 `backend/backend/database/01-init.sql`
+2. 进入 `backend/backend` 安装依赖并启动服务
+3. 进入 `fontend` 安装依赖并启动 Vite
 
-## 常见问题
+## 联调提醒
 
-### 首页没有文章
+### 文章可见性
 
-先确认数据库里存在至少一篇 `published` 状态的文章。
+游客默认只能看到 `published` 状态的文章。
 
-### 评论列表为空
+### 分类和标签
 
-确认评论接口没有被鉴权中间件误拦截，同时检查文章 ID 是否对应已有评论。
+如果列表筛选异常，先检查分类 ID 和标签 ID 是否与种子数据一致。
 
-### 图片或头像打不开
+### 接口代理
 
-确认前端显示时使用的是后端返回的相对路径，并通过统一的资源地址构造函数补全。', '记录当前项目在本机联调时需要的数据库、后端与前端启动参数。', 'published', '2026-04-09 10:30:00', '2026-04-10 10:20:00', '2026-04-09 11:00:00', 36, NULL, NULL);
-INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (3, 2, '游客可见文章却返回 401 的排查思路', 'article-401-troubleshooting', '# 游客可见文章却返回 401 的排查思路
+前端开发环境需要确认代理配置正常，否则容易把接口请求打到错误地址。', '快速说明本地数据库、端口约定和前后端联调步骤。', 'published', '2026-04-09 10:30:00', '2026-04-10 10:20:00', '2026-04-09 11:00:00', 36, NULL, NULL);
+INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (3, 2, '文章接口 401 排查记录', 'article-401-troubleshooting', '# 文章接口 401 排查记录
 
-当文章列表本来应该允许游客访问，却仍然返回 401，通常可以沿着三条线排查：
+最近联调时碰到文章接口返回 401，这里把排查过程整理一下，方便后续快速定位。
 
-## 1. 路由与中间件
+## 1. 先看中间件顺序
 
-- 检查列表接口是否误挂了强制登录的 `auth` 中间件。
-- 如果接口需要“登录可增强、游客可访问”，应该使用可选鉴权中间件。
-- 注意固定路由和动态路由的顺序，避免被 `/:id` 之类的路由吞掉。
+- 是否把需要游客访问的接口错误地挂到了 `auth` 后面
+- 是否有路由顺序导致固定路径被动态参数吞掉
+- 是否把公开接口误接到了后台鉴权链路里
 
-## 2. 前端代理与请求头
+## 2. 再看前端请求
 
-- 检查 Vite 代理是否把请求正确转发到了后端端口。
-- 如果浏览器里残留了失效 token，请确认前端不会强行把无效 token 带给所有公共接口。
+- 检查 Vite 代理是否把请求转发到了正确后端
+- 确认前端是否错误依赖 token，而当前项目真实使用的是 cookie 会话
 
-## 3. 后端返回逻辑
+## 3. 最后看响应语义
 
-- 公共列表接口应该优先返回文章数据。
-- 只有需要登录态才能执行的行为，例如点赞、收藏、删除评论，才应该返回 401 或 403。', '当文章列表接口本应开放给游客却返回 401 时，可以沿着中间件、代理与 token 三条线快速排查。', 'published', '2026-04-09 14:00:00', '2026-04-09 14:25:00', '2026-04-09 14:30:00', 18, NULL, NULL);
-INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (4, 3, 'application.yml 与 application.properties 配置说明', 'spring-application-config-guide', '# application.yml 与 application.properties 配置说明
+- 认证失败应该返回 401
+- 权限不足则应该明确区分成 403', '整理一次文章接口 401 的排查过程，重点提醒不要把 cookie 会话误当成 token。', 'published', '2026-04-09 14:00:00', '2026-04-09 14:25:00', '2026-04-09 14:30:00', 18, NULL, NULL);
+INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (4, 3, 'application.yml 和 application.properties 怎么选', 'spring-application-config-guide', '# application.yml 和 application.properties 怎么选
 
-Spring Boot 常见的配置文件有两种：`application.properties` 和 `application.yml`。
+Spring Boot 项目里最常见的配置文件就是 `application.properties` 和 `application.yml`。
 
 ## properties 的特点
 
-- 键值对结构简单
-- 适合配置项较少的项目
-- 对初学者更直观
+- 语法直接
+- 对新同学更友好
+- 适合简单配置
 
 ## yml 的特点
 
-- 层级更清晰
-- 更适合组织复杂配置
-- 多环境配置更容易阅读
+- 层级结构清晰
+- 复杂配置更容易维护
+- 更适合多环境拆分
 
-## 选择建议
+## 我的建议
 
-如果项目配置已经比较多，优先使用 `application.yml`；
-如果团队已经沉淀了统一的 properties 模板，也可以继续沿用，关键是保持一致。', '梳理 Spring Boot 中两种常见配置文件的结构差异、适用场景和团队协作建议。', 'published', '2026-04-07 15:30:00', '2026-04-07 15:50:00', '2026-04-07 16:00:00', 12, NULL, NULL);
-INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (5, 3, '为什么 Spring 要管理 Bean 对象', 'why-spring-manages-beans', '# 为什么 Spring 要管理 Bean 对象
+如果项目配置比较简单，用 `application.properties` 也完全够用。
+如果配置项已经有明显层级，切换到 `application.yml` 会更省心。', '结合 Spring Boot 常见场景，对比两种配置文件的使用体验。', 'published', '2026-04-07 15:30:00', '2026-04-07 15:50:00', '2026-04-07 16:00:00', 12, NULL, NULL);
+INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (5, 3, '为什么 Spring 要管理 Bean', 'why-spring-manages-beans', '# 为什么 Spring 要管理 Bean
 
-Spring 管理 Bean 的核心目的是把对象创建、依赖注入和生命周期管理统一交给容器处理。
+Spring 管理 Bean 的核心意义，不只是少写几个 `new`，而是把对象生命周期和依赖关系统一收口。
 
-## 这样做的好处
+## 直接收益
 
-1. 降低对象之间的耦合。
-2. 统一管理依赖关系。
-3. 更容易替换实现、编写测试和做扩展。
+1. 依赖注入更清晰
+2. 组件职责更容易拆分
+3. 测试和替换实现成本更低
 
-## 从工程角度理解
+## 更重要的一点
 
-如果每个业务类都自己 `new` 依赖对象，项目一大就会变得很难维护。
-交给 Spring 容器之后，类只关心“我需要什么”，而不是“我如何创建它”。', '从依赖注入、控制反转和工程维护成本三个角度解释 Spring 管理 Bean 的必要性。', 'published', '2026-04-07 18:00:00', '2026-04-07 18:20:00', '2026-04-07 18:30:00', 15, NULL, NULL);
-INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (6, 1, '闭包、IIFE 与 let 的区别', 'closure-iife-let', '# 闭包、IIFE 与 let 的区别
+如果所有对象都自己手动创建，后续想做扩展、代理或统一配置都会越来越吃力。
+交给 Spring 管理后，很多横切能力就有了稳定落点。', '从依赖注入和生命周期两个角度解释 Spring 为什么要管理 Bean。', 'published', '2026-04-07 18:00:00', '2026-04-07 18:20:00', '2026-04-07 18:30:00', 15, NULL, NULL);
+INSERT INTO `posts` (`PostID`, `UserID`, `Title`, `Slug`, `Content`, `Excerpt`, `Status`, `CreatedAt`, `UpdatedAt`, `PublishedAt`, `ViewCount`, `FeaturedImageURL`, `CurrentRevisionID`) VALUES (6, 1, '循环里为什么以前要用 IIFE，现在更多用 let', 'closure-iife-let', '# 循环里为什么以前要用 IIFE，现在更多用 let
 
-很多关于闭包的困惑，都来自作用域和变量捕获时机没有分清。
+这是一个很典型的 JavaScript 闭包问题，经常出现在老代码和面试题里。
 
-## 闭包是什么
+## 先看问题来源
 
-闭包本质上是函数和其词法作用域的组合。函数执行结束后，仍然可以访问当时作用域中的变量。
+过去如果在循环里使用 `var`，多个回调可能会共享同一个作用域变量，导致结果不符合预期。
 
-## IIFE 解决了什么
+## IIFE 的解决方式
 
-在早期 JavaScript 中，`var` 只有函数作用域，没有块级作用域。
-为了在循环里拿到每次迭代的独立变量，常用 IIFE 立即执行函数来制造一个新的作用域。
+早期 JavaScript 里没有块级作用域，所以经常借助 IIFE 人为创建一个独立作用域，把当前值包进去。
 
-## let 为什么更直观
+## let 为什么更自然
 
-`let` 提供了块级作用域，每次循环都会得到一个新的绑定，所以很多以前必须靠 IIFE 解决的问题，现在直接用 `let` 就够了。', '从作用域、变量捕获和循环场景出发，解释闭包、IIFE 与 let 之间的联系与差异。', 'published', '2026-04-06 18:40:00', '2026-04-06 18:55:00', '2026-04-06 19:00:00', 22, NULL, NULL);
+`let` 自带块级作用域，每次循环都会生成更贴近直觉的绑定，因此现在大多数场景都不需要再手写 IIFE 了。', '解释老项目里 IIFE 的来历，以及现代 JavaScript 为什么更常用 let。', 'published', '2026-04-06 18:40:00', '2026-04-06 18:55:00', '2026-04-06 19:00:00', 22, NULL, NULL);
 
 -- ----------------------------
 -- Records of postcategories
@@ -228,123 +304,122 @@ INSERT INTO `postfavorites` (`PostID`, `UserID`, `CreatedAt`) VALUES (5, 3, '202
 -- ----------------------------
 -- Records of postrevisions
 -- ----------------------------
-INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (1, 1, 1, '猫猫主题站点改版记录', '# 猫猫主题站点改版记录
+INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (1, 1, 1, '首页猫咪主题更新记录', '# 首页猫咪主题更新记录
 
-这次改版的目标很直接：保留猫猫元素，但不要只是把猫咪贴图堆在页面上，而是让导航、首屏、滚动节奏和文章卡片统一到同一套视觉语言里。
+这次首页改版重点放在猫咪插画、首屏氛围和文章入口的平衡上，希望页面更有记忆点，也方便继续扩展后续活动素材。
 
-## 这次改了什么
+## 这次调整了什么
 
-- 首页首屏改成沉浸式全屏布局，猫猫光斑、流体背景和悬浮粒子共同构成第一屏的氛围。
-- 导航栏和首页主体共用一组主题变量，解决了顶部和正文区域色差明显的问题。
-- 文章列表不再是静态堆叠，而是通过滚动分屏把“首屏展示”和“最新文章”串起来。
+- 重新梳理了首页视觉层次，让插画和正文入口不会互相抢焦点
+- 把猫咪素材拆成可管理的数据项，方便后台继续维护
+- 优化了首页卡片和列表的留白，让阅读节奏更舒服
 
-## 交互设计上的取舍
+## 接下来准备做什么
 
-1. 动效必须服务阅读，而不是抢内容。
-2. 保留猫猫元素，但控制它的密度，避免喧宾夺主。
-3. 所有动态效果都要在桌面端和移动端都能稳定工作。
+1. 继续补齐后台管理入口
+2. 统一首页和文章详情页的视觉语言
+3. 给移动端补上更稳定的适配方案
 
-## 后续计划
+## 小结
 
-下一步会继续补齐首页卡片切换、文章区块滑入和主题联动，让整站体验更完整。', '保留猫猫元素的同时，让首页动效、导航和内容区统一成同一套主题语言。', '初始版本', '2026-04-08 20:00:00', 'initial');
-INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (2, 2, 1, '前后端本地启动指南', '# 前后端本地启动指南
+这次先把基础风格打稳，后面再继续补动态效果和内容运营能力。', '记录首页猫咪主题改版的方向、拆分方式和后续计划。', '初始导入', '2026-04-08 20:00:00', 'initial');
+INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (2, 2, 1, '本地开发环境快速说明', '# 本地开发环境快速说明
 
-这份说明用于本机联调当前项目，默认环境如下：
+为了让本地联调更顺畅，项目里把常用端口和初始化步骤做了统一约定。
 
 - MySQL：`localhost:3307`
 - 数据库：`techblogdb`
-- 数据库账号：`root / root123`
+- 默认账号：`root / root123`
 - 后端端口：`3001`
 - 前端端口：`5173`
 
-## 推荐顺序
+## 初始化步骤
 
-1. 先在 `techblogdb` 库中导入 `backend/backend/database/01-init.sql`。
-2. 在 `backend/backend` 目录安装依赖并启动服务。
-3. 在 `fontend` 目录安装依赖并启动 Vite。
+1. 先创建 `techblogdb`，再执行 `backend/backend/database/01-init.sql`
+2. 进入 `backend/backend` 安装依赖并启动服务
+3. 进入 `fontend` 安装依赖并启动 Vite
 
-## 常见问题
+## 联调提醒
 
-### 首页没有文章
+### 文章可见性
 
-先确认数据库里存在至少一篇 `published` 状态的文章。
+游客默认只能看到 `published` 状态的文章。
 
-### 评论列表为空
+### 分类和标签
 
-确认评论接口没有被鉴权中间件误拦截，同时检查文章 ID 是否对应已有评论。
+如果列表筛选异常，先检查分类 ID 和标签 ID 是否与种子数据一致。
 
-### 图片或头像打不开
+### 接口代理
 
-确认前端显示时使用的是后端返回的相对路径，并通过统一的资源地址构造函数补全。', '记录当前项目在本机联调时需要的数据库、后端与前端启动参数。', '初始版本', '2026-04-09 10:30:00', 'initial');
-INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (3, 3, 2, '游客可见文章却返回 401 的排查思路', '# 游客可见文章却返回 401 的排查思路
+前端开发环境需要确认代理配置正常，否则容易把接口请求打到错误地址。', '快速说明本地数据库、端口约定和前后端联调步骤。', '初始导入', '2026-04-09 10:30:00', 'initial');
+INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (3, 3, 2, '文章接口 401 排查记录', '# 文章接口 401 排查记录
 
-当文章列表本来应该允许游客访问，却仍然返回 401，通常可以沿着三条线排查：
+最近联调时碰到文章接口返回 401，这里把排查过程整理一下，方便后续快速定位。
 
-## 1. 路由与中间件
+## 1. 先看中间件顺序
 
-- 检查列表接口是否误挂了强制登录的 `auth` 中间件。
-- 如果接口需要“登录可增强、游客可访问”，应该使用可选鉴权中间件。
-- 注意固定路由和动态路由的顺序，避免被 `/:id` 之类的路由吞掉。
+- 是否把需要游客访问的接口错误地挂到了 `auth` 后面
+- 是否有路由顺序导致固定路径被动态参数吞掉
+- 是否把公开接口误接到了后台鉴权链路里
 
-## 2. 前端代理与请求头
+## 2. 再看前端请求
 
-- 检查 Vite 代理是否把请求正确转发到了后端端口。
-- 如果浏览器里残留了失效 token，请确认前端不会强行把无效 token 带给所有公共接口。
+- 检查 Vite 代理是否把请求转发到了正确后端
+- 确认前端是否错误依赖 token，而当前项目真实使用的是 cookie 会话
 
-## 3. 后端返回逻辑
+## 3. 最后看响应语义
 
-- 公共列表接口应该优先返回文章数据。
-- 只有需要登录态才能执行的行为，例如点赞、收藏、删除评论，才应该返回 401 或 403。', '当文章列表接口本应开放给游客却返回 401 时，可以沿着中间件、代理与 token 三条线快速排查。', '初始版本', '2026-04-09 14:00:00', 'initial');
-INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (4, 4, 3, 'application.yml 与 application.properties 配置说明', '# application.yml 与 application.properties 配置说明
+- 认证失败应该返回 401
+- 权限不足则应该明确区分成 403', '整理一次文章接口 401 的排查过程，重点提醒不要把 cookie 会话误当成 token。', '初始导入', '2026-04-09 14:00:00', 'initial');
+INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (4, 4, 3, 'application.yml 和 application.properties 怎么选', '# application.yml 和 application.properties 怎么选
 
-Spring Boot 常见的配置文件有两种：`application.properties` 和 `application.yml`。
+Spring Boot 项目里最常见的配置文件就是 `application.properties` 和 `application.yml`。
 
 ## properties 的特点
 
-- 键值对结构简单
-- 适合配置项较少的项目
-- 对初学者更直观
+- 语法直接
+- 对新同学更友好
+- 适合简单配置
 
 ## yml 的特点
 
-- 层级更清晰
-- 更适合组织复杂配置
-- 多环境配置更容易阅读
+- 层级结构清晰
+- 复杂配置更容易维护
+- 更适合多环境拆分
 
-## 选择建议
+## 我的建议
 
-如果项目配置已经比较多，优先使用 `application.yml`；
-如果团队已经沉淀了统一的 properties 模板，也可以继续沿用，关键是保持一致。', '梳理 Spring Boot 中两种常见配置文件的结构差异、适用场景和团队协作建议。', '初始版本', '2026-04-07 15:30:00', 'initial');
-INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (5, 5, 3, '为什么 Spring 要管理 Bean 对象', '# 为什么 Spring 要管理 Bean 对象
+如果项目配置比较简单，用 `application.properties` 也完全够用。
+如果配置项已经有明显层级，切换到 `application.yml` 会更省心。', '结合 Spring Boot 常见场景，对比两种配置文件的使用体验。', '初始导入', '2026-04-07 15:30:00', 'initial');
+INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (5, 5, 3, '为什么 Spring 要管理 Bean', '# 为什么 Spring 要管理 Bean
 
-Spring 管理 Bean 的核心目的是把对象创建、依赖注入和生命周期管理统一交给容器处理。
+Spring 管理 Bean 的核心意义，不只是少写几个 `new`，而是把对象生命周期和依赖关系统一收口。
 
-## 这样做的好处
+## 直接收益
 
-1. 降低对象之间的耦合。
-2. 统一管理依赖关系。
-3. 更容易替换实现、编写测试和做扩展。
+1. 依赖注入更清晰
+2. 组件职责更容易拆分
+3. 测试和替换实现成本更低
 
-## 从工程角度理解
+## 更重要的一点
 
-如果每个业务类都自己 `new` 依赖对象，项目一大就会变得很难维护。
-交给 Spring 容器之后，类只关心“我需要什么”，而不是“我如何创建它”。', '从依赖注入、控制反转和工程维护成本三个角度解释 Spring 管理 Bean 的必要性。', '初始版本', '2026-04-07 18:00:00', 'initial');
-INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (6, 6, 1, '闭包、IIFE 与 let 的区别', '# 闭包、IIFE 与 let 的区别
+如果所有对象都自己手动创建，后续想做扩展、代理或统一配置都会越来越吃力。
+交给 Spring 管理后，很多横切能力就有了稳定落点。', '从依赖注入和生命周期两个角度解释 Spring 为什么要管理 Bean。', '初始导入', '2026-04-07 18:00:00', 'initial');
+INSERT INTO `postrevisions` (`RevisionID`, `PostID`, `UserID`, `Title`, `Content`, `Excerpt`, `RevisionNotes`, `CreatedAt`, `RevisionType`) VALUES (6, 6, 1, '循环里为什么以前要用 IIFE，现在更多用 let', '# 循环里为什么以前要用 IIFE，现在更多用 let
 
-很多关于闭包的困惑，都来自作用域和变量捕获时机没有分清。
+这是一个很典型的 JavaScript 闭包问题，经常出现在老代码和面试题里。
 
-## 闭包是什么
+## 先看问题来源
 
-闭包本质上是函数和其词法作用域的组合。函数执行结束后，仍然可以访问当时作用域中的变量。
+过去如果在循环里使用 `var`，多个回调可能会共享同一个作用域变量，导致结果不符合预期。
 
-## IIFE 解决了什么
+## IIFE 的解决方式
 
-在早期 JavaScript 中，`var` 只有函数作用域，没有块级作用域。
-为了在循环里拿到每次迭代的独立变量，常用 IIFE 立即执行函数来制造一个新的作用域。
+早期 JavaScript 里没有块级作用域，所以经常借助 IIFE 人为创建一个独立作用域，把当前值包进去。
 
-## let 为什么更直观
+## let 为什么更自然
 
-`let` 提供了块级作用域，每次循环都会得到一个新的绑定，所以很多以前必须靠 IIFE 解决的问题，现在直接用 `let` 就够了。', '从作用域、变量捕获和循环场景出发，解释闭包、IIFE 与 let 之间的联系与差异。', '初始版本', '2026-04-06 18:40:00', 'initial');
+`let` 自带块级作用域，每次循环都会生成更贴近直觉的绑定，因此现在大多数场景都不需要再手写 IIFE 了。', '解释老项目里 IIFE 的来历，以及现代 JavaScript 为什么更常用 let。', '初始导入', '2026-04-06 18:40:00', 'initial');
 
 -- ----------------------------
 -- Sync current revision pointers
@@ -359,19 +434,19 @@ UPDATE `posts` SET `CurrentRevisionID` = 6 WHERE `PostID` = 6;
 -- ----------------------------
 -- Records of comments
 -- ----------------------------
-INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (1, 2, 4, NULL, '这份启动说明很清楚，按 3307 / 3001 / 5173 配置后就跑通了。', 'approved', '2026-04-10 10:40:00', NULL, 1);
-INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (2, 2, 5, 1, '如果首页还是没有文章，先确认数据库里至少存在一篇 published 状态的文章。', 'approved', '2026-04-10 10:45:00', NULL, 1);
-INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (3, 3, 2, NULL, 'optionalAuth 和 auth 混用时最容易出问题，尤其是路由顺序被动态参数吞掉的时候。', 'approved', '2026-04-10 11:00:00', NULL, 1);
-INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (4, 1, 3, NULL, '猫猫元素保留得不错，滚动动画也很顺滑。', 'approved', '2026-04-10 11:10:00', NULL, 1);
-INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (5, 6, 4, NULL, '闭包这段解释比很多面试题答案更好懂。', 'approved', '2026-04-10 11:20:00', NULL, 1);
+INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (1, 2, 4, NULL, '这个端口说明很实用，3307 / 3001 / 5173 一眼就能对上。', 'approved', '2026-04-10 10:40:00', NULL, 1);
+INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (2, 2, 5, 1, '补充一下，联调前最好先确认文章状态里确实有 published 数据。', 'approved', '2026-04-10 10:45:00', NULL, 1);
+INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (3, 3, 2, NULL, '`optionalAuth` 和 `auth` 的区别确实很关键，公开接口这里特别容易踩坑。', 'approved', '2026-04-10 11:00:00', NULL, 1);
+INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (4, 1, 3, NULL, '首页猫咪主题现在比之前有辨识度多了。', 'approved', '2026-04-10 11:10:00', NULL, 1);
+INSERT INTO `comments` (`CommentID`, `PostID`, `UserID`, `ParentCommentID`, `Content`, `Status`, `CreatedAt`, `LastEditedAt`, `CanDelete`) VALUES (5, 6, 4, NULL, '这篇把闭包问题讲得很顺，适合给新同学看。', 'approved', '2026-04-10 11:20:00', NULL, 1);
 
 -- ----------------------------
 -- Records of operationlogs
 -- ----------------------------
 INSERT INTO `operationlogs` (`LogID`, `UserID`, `OperationType`, `TargetType`, `TargetID`, `Details`, `IPAddress`, `UserAgent`, `Timestamp`) VALUES (1, 5, 'login', 'user', 5, '{"username":"admin","loginMethod":"username"}', '127.0.0.1', 'Chrome', '2026-04-10 10:00:00');
-INSERT INTO `operationlogs` (`LogID`, `UserID`, `OperationType`, `TargetType`, `TargetID`, `Details`, `IPAddress`, `UserAgent`, `Timestamp`) VALUES (2, 1, 'create', 'post', 1, '{"title":"猫猫主题站点改版记录"}', '127.0.0.1', 'Chrome', '2026-04-10 10:05:00');
-INSERT INTO `operationlogs` (`LogID`, `UserID`, `OperationType`, `TargetType`, `TargetID`, `Details`, `IPAddress`, `UserAgent`, `Timestamp`) VALUES (3, 1, 'create', 'post', 2, '{"title":"前后端本地启动指南"}', '127.0.0.1', 'Chrome', '2026-04-10 10:06:00');
-INSERT INTO `operationlogs` (`LogID`, `UserID`, `OperationType`, `TargetType`, `TargetID`, `Details`, `IPAddress`, `UserAgent`, `Timestamp`) VALUES (4, 2, 'create', 'post', 3, '{"title":"游客可见文章却返回 401 的排查思路"}', '127.0.0.1', 'Chrome', '2026-04-10 10:07:00');
+INSERT INTO `operationlogs` (`LogID`, `UserID`, `OperationType`, `TargetType`, `TargetID`, `Details`, `IPAddress`, `UserAgent`, `Timestamp`) VALUES (2, 1, 'create', 'post', 1, '{"title":"首页猫咪主题更新记录"}', '127.0.0.1', 'Chrome', '2026-04-10 10:05:00');
+INSERT INTO `operationlogs` (`LogID`, `UserID`, `OperationType`, `TargetType`, `TargetID`, `Details`, `IPAddress`, `UserAgent`, `Timestamp`) VALUES (3, 1, 'create', 'post', 2, '{"title":"本地开发环境快速说明"}', '127.0.0.1', 'Chrome', '2026-04-10 10:06:00');
+INSERT INTO `operationlogs` (`LogID`, `UserID`, `OperationType`, `TargetType`, `TargetID`, `Details`, `IPAddress`, `UserAgent`, `Timestamp`) VALUES (4, 2, 'create', 'post', 3, '{"title":"文章接口 401 排查记录"}', '127.0.0.1', 'Chrome', '2026-04-10 10:07:00');
 
 -- ----------------------------
 -- Triggers structure for table for posts

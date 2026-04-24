@@ -34,6 +34,14 @@ function isOwner(user, attachment) {
   return !!user && !!attachment && Number(user.id) === Number(attachment.UserID);
 }
 
+function isPublicSiteAsset(attachment) {
+  return !!attachment
+    && !attachment.IsDeleted
+    && !attachment.IsTemporary
+    && !attachment.PostID
+    && String(attachment.TempKey || '').trim() === 'site-branding';
+}
+
 function normalizeBoolean(value, defaultValue = false) {
   if (value === undefined || value === null || value === '') return defaultValue;
   if (typeof value === 'boolean') return value;
@@ -165,7 +173,16 @@ async function maybeCompressImage(file, options = {}) {
   const maxHeight = options.maxHeight ? Number(options.maxHeight) : undefined;
 
   try {
-    let transformer = sharp(file.buffer);
+    if (String(file.mimetype || '').toLowerCase() === 'image/gif') {
+      return {
+        buffer: file.buffer,
+        mimeType: file.mimetype,
+        compressionInfo: null
+      };
+    }
+
+    let transformer = sharp(file.buffer, { animated: true });
+    const metadata = await transformer.metadata();
     if (maxWidth || maxHeight) {
       transformer = transformer.resize(maxWidth, maxHeight, {
         fit: 'inside',
@@ -173,10 +190,22 @@ async function maybeCompressImage(file, options = {}) {
       });
     }
 
-    const compressedBuffer = await transformer.jpeg({ quality }).toBuffer();
+    let compressedBuffer;
+    let mimeType = 'image/jpeg';
+
+    if (metadata.hasAlpha || file.mimetype === 'image/png') {
+      compressedBuffer = await transformer.png({ compressionLevel: 9 }).toBuffer();
+      mimeType = 'image/png';
+    } else if (file.mimetype === 'image/webp') {
+      compressedBuffer = await transformer.webp({ quality }).toBuffer();
+      mimeType = 'image/webp';
+    } else {
+      compressedBuffer = await transformer.jpeg({ quality }).toBuffer();
+    }
+
     return {
       buffer: compressedBuffer,
-      mimeType: 'image/jpeg',
+      mimeType,
       compressionInfo: {
         originalSize: file.size,
         compressedSize: compressedBuffer.length,
@@ -236,6 +265,10 @@ async function canReadAttachment(attachment, user) {
   if (!attachment) return false;
 
   if (isAdmin(user) || isOwner(user, attachment)) {
+    return true;
+  }
+
+  if (isPublicSiteAsset(attachment)) {
     return true;
   }
 

@@ -1,11 +1,13 @@
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 
 ENV NODE_ENV=production
 WORKDIR /app
 
-RUN apk add --no-cache \
-    libc6-compat \
-    vips-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libc6 \
+    libvips-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 RUN npm ci --omit=dev --no-audit --no-fund && \

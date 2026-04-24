@@ -11,7 +11,6 @@ const {
   refreshAuthSession,
   revokeSession,
   revokeUserSessions,
-  bumpUserSessionVersion,
   extractAccessToken,
   hashToken,
   getTokenExpiryDate,
@@ -56,7 +55,7 @@ function createControllerError(status, message, data = null, code = 1) {
 function ensureValidRequest(req, next) {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    next(createControllerError(400, '????', errors.array(), errorCode.VALIDATION_ERROR.code))
+    next(createControllerError(400, '参数校验失败', errors.array(), errorCode.VALIDATION_ERROR.code))
     return false
   }
 
@@ -239,27 +238,28 @@ exports.sendRegisterCode = async (req, res, next) => {
   try {
     const email = normalizeEmail(req.body.email)
     if (!email) {
-      return next(createControllerError(400, '??????'))
+      return next(createControllerError(400, '邮箱不能为空'))
     }
 
     const existEmail = await User.findOne({ where: { Email: email }, attributes: ['UserID'] })
     if (existEmail) {
-      return next(createControllerError(400, '??????'))
+      return next(createControllerError(400, '邮箱已被注册'))
     }
 
     const allowSend = await canSendNewCode(email, 'register')
     if (!allowSend) {
-      return next(createControllerError(429, '??????????? 1 ?????'))
+      return next(createControllerError(429, '验证码发送过于频繁，请 1 分钟后再试'))
     }
 
     await invalidateUnusedCodes(email, 'register')
     await createAndSendVerificationCode({ email, scene: 'register' })
 
-    return res.success(null, '????????????')
+    return res.success(null, '验证码已发送，请注意查收')
   } catch (err) {
-    return next(createControllerError(500, err.message || '?????', err.message, errorCode.SYSTEM_ERROR.code))
+    return next(createControllerError(500, err.message || '服务器内部错误', err.message, errorCode.SYSTEM_ERROR.code))
   }
 }
+
 exports.register = async (req, res, next) => {
   if (!ensureValidRequest(req, next)) return
 
@@ -274,7 +274,7 @@ exports.register = async (req, res, next) => {
 
     if (!code) {
       await transaction.rollback()
-      return next(createControllerError(400, '???????'))
+      return next(createControllerError(400, '验证码不能为空'))
     }
 
     const verification = await findValidVerificationCode({
@@ -286,7 +286,7 @@ exports.register = async (req, res, next) => {
 
     if (!verification) {
       await transaction.rollback()
-      return next(createControllerError(400, '?????????'))
+      return next(createControllerError(400, '验证码错误或已过期'))
     }
 
     const [existUsername, existEmail, existPhone] = await Promise.all([
@@ -297,17 +297,17 @@ exports.register = async (req, res, next) => {
 
     if (existUsername) {
       await transaction.rollback()
-      return next(createControllerError(400, '??????'))
+      return next(createControllerError(400, '用户名已存在'))
     }
 
     if (existEmail) {
       await transaction.rollback()
-      return next(createControllerError(400, '??????'))
+      return next(createControllerError(400, '邮箱已被注册'))
     }
 
     if (existPhone) {
       await transaction.rollback()
-      return next(createControllerError(400, '??????'))
+      return next(createControllerError(400, '手机号已被占用'))
     }
 
     const passwordHash = await bcrypt.hash(password, getPasswordRounds())
@@ -346,15 +346,16 @@ exports.register = async (req, res, next) => {
       UserID: user.UserID,
       Username: user.Username,
       Email: user.Email,
-    }, '????')
+    }, '注册成功')
   } catch (err) {
     if (!transaction.finished) {
       await transaction.rollback()
     }
 
-    return next(createControllerError(500, err.message || '?????', err.message, errorCode.SYSTEM_ERROR.code))
+    return next(createControllerError(500, err.message || '服务器内部错误', err.message, errorCode.SYSTEM_ERROR.code))
   }
 }
+
 exports.sendLoginCode = async (req, res, next) => {
   if (!ensureValidRequest(req, next)) return
 
@@ -363,32 +364,33 @@ exports.sendLoginCode = async (req, res, next) => {
     const loginUser = await findLoginUser(req.body)
 
     if (!loginUser) {
-      return next(createControllerError(400, '???????'))
+      return next(createControllerError(400, '账号或密码错误'))
     }
 
     const { user } = loginUser
     if (!user.IsActive) {
-      return next(createControllerError(403, '?????????????'))
+      return next(createControllerError(403, '账号已被禁用，请联系管理员'))
     }
 
     const isMatch = await bcrypt.compare(password, user.PasswordHash)
     if (!isMatch) {
-      return next(createControllerError(400, '???????'))
+      return next(createControllerError(400, '账号或密码错误'))
     }
 
     const allowSend = await canSendNewCode(user.Email, 'login')
     if (!allowSend) {
-      return next(createControllerError(429, '??????????? 1 ?????'))
+      return next(createControllerError(429, '验证码发送过于频繁，请 1 分钟后再试'))
     }
 
     await invalidateUnusedCodes(user.Email, 'login')
     await createAndSendVerificationCode({ email: user.Email, scene: 'login', userId: user.UserID })
 
-    return res.success(null, '????????????????')
+    return res.success(null, '登录验证码已发送，请注意查收')
   } catch (err) {
-    return next(createControllerError(500, err.message || '?????', err.message, errorCode.SYSTEM_ERROR.code))
+    return next(createControllerError(500, err.message || '服务器内部错误', err.message, errorCode.SYSTEM_ERROR.code))
   }
 }
+
 exports.login = async (req, res, next) => {
   if (!ensureValidRequest(req, next)) return
 
@@ -402,19 +404,19 @@ exports.login = async (req, res, next) => {
 
     if (!loginUser) {
       await transaction.rollback()
-      return next(createControllerError(400, '???????'))
+      return next(createControllerError(400, '账号或密码错误'))
     }
 
     const { user, accountInfo } = loginUser
     if (!user.IsActive) {
       await transaction.rollback()
-      return next(createControllerError(403, '?????????????'))
+      return next(createControllerError(403, '账号已被禁用，请联系管理员'))
     }
 
     const isMatch = await bcrypt.compare(password, user.PasswordHash)
     if (!isMatch) {
       await transaction.rollback()
-      return next(createControllerError(400, '???????'))
+      return next(createControllerError(400, '账号或密码错误'))
     }
 
     const verification = await findValidVerificationCode({
@@ -426,7 +428,7 @@ exports.login = async (req, res, next) => {
 
     if (!verification) {
       await transaction.rollback()
-      return next(createControllerError(400, '?????????'))
+      return next(createControllerError(400, '验证码错误或已过期'))
     }
 
     verification.Used = true
@@ -461,28 +463,30 @@ exports.login = async (req, res, next) => {
     return res.success({
       authenticated: true,
       rememberMe,
-    }, '????')
+    }, '登录成功')
   } catch (err) {
     if (!transaction.finished) {
       await transaction.rollback()
     }
 
-    return next(createControllerError(500, err.message || '?????', err.message, errorCode.SYSTEM_ERROR.code))
+    return next(createControllerError(500, err.message || '服务器内部错误', err.message, errorCode.SYSTEM_ERROR.code))
   }
 }
+
 exports.refresh = async (req, res, next) => {
   try {
     await refreshAuthSession(req, res)
-    return res.success({ refreshed: true }, '??????')
+    return res.success({ refreshed: true }, '刷新成功')
   } catch (err) {
     clearAuthCookies(res, req)
     return next({
       status: err.status || 401,
       code: err.code || errorCode.AUTH_ERROR.code,
-      message: err.message || '?????????????',
+      message: err.message || '登录状态已失效，请重新登录',
     })
   }
 }
+
 exports.sendForgotPasswordCode = async (req, res, next) => {
   if (!ensureValidRequest(req, next)) return
 
@@ -494,22 +498,23 @@ exports.sendForgotPasswordCode = async (req, res, next) => {
     })
 
     if (!user || !user.IsActive) {
-      return res.success(null, '????????????????????')
+      return res.success(null, '如果邮箱已注册，验证码将发送至该邮箱')
     }
 
     const allowSend = await canSendNewCode(email, 'forgot_password')
     if (!allowSend) {
-      return next(createControllerError(429, '??????????? 1 ?????'))
+      return next(createControllerError(429, '验证码发送过于频繁，请 1 分钟后再试'))
     }
 
     await invalidateUnusedCodes(email, 'forgot_password')
     await createAndSendVerificationCode({ email, scene: 'forgot_password', userId: user.UserID })
 
-    return res.success(null, '????????????????????')
+    return res.success(null, '如果邮箱已注册，验证码将发送至该邮箱')
   } catch (err) {
-    return next(createControllerError(500, err.message || '?????', err.message, errorCode.SYSTEM_ERROR.code))
+    return next(createControllerError(500, err.message || '服务器内部错误', err.message, errorCode.SYSTEM_ERROR.code))
   }
 }
+
 exports.forgotPassword = async (req, res, next) => {
   if (!ensureValidRequest(req, next)) return
 
@@ -529,13 +534,13 @@ exports.forgotPassword = async (req, res, next) => {
 
     if (!verification) {
       await transaction.rollback()
-      return next(createControllerError(400, '?????????'))
+      return next(createControllerError(400, '验证码错误或已过期'))
     }
 
     const user = await User.findOne({ where: { Email: email }, transaction })
     if (!user) {
       await transaction.rollback()
-      return next(createControllerError(404, '?????', null, errorCode.NOT_FOUND.code))
+      return next(createControllerError(404, '用户不存在', null, errorCode.NOT_FOUND.code))
     }
 
     verification.Used = true
@@ -558,15 +563,16 @@ exports.forgotPassword = async (req, res, next) => {
       details: { email: user.Email, scene: 'forgot_password' },
     })
 
-    return res.success({ requireReLogin: true }, '????????????')
+    return res.success({ requireReLogin: true }, '密码重置成功，请重新登录')
   } catch (err) {
     if (!transaction.finished) {
       await transaction.rollback()
     }
 
-    return next(createControllerError(500, err.message || '?????', err.message, errorCode.SYSTEM_ERROR.code))
+    return next(createControllerError(500, err.message || '服务器内部错误', err.message, errorCode.SYSTEM_ERROR.code))
   }
 }
+
 exports.sendChangePasswordCode = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.user.id, {
@@ -574,26 +580,27 @@ exports.sendChangePasswordCode = async (req, res, next) => {
     })
 
     if (!user) {
-      return next(createControllerError(404, '?????', null, errorCode.NOT_FOUND.code))
+      return next(createControllerError(404, '用户不存在', null, errorCode.NOT_FOUND.code))
     }
 
     if (!user.IsActive) {
-      return next(createControllerError(403, '?????????????'))
+      return next(createControllerError(403, '账号已被禁用，请联系管理员'))
     }
 
     const allowSend = await canSendNewCode(user.Email, 'change_password')
     if (!allowSend) {
-      return next(createControllerError(429, '??????????? 1 ?????'))
+      return next(createControllerError(429, '验证码发送过于频繁，请 1 分钟后再试'))
     }
 
     await invalidateUnusedCodes(user.Email, 'change_password')
     await createAndSendVerificationCode({ email: user.Email, scene: 'change_password', userId: user.UserID })
 
-    return res.success(null, '??????????????????')
+    return res.success(null, '修改密码验证码已发送，请注意查收')
   } catch (err) {
-    return next(createControllerError(500, err.message || '?????', err.message, errorCode.SYSTEM_ERROR.code))
+    return next(createControllerError(500, err.message || '服务器内部错误', err.message, errorCode.SYSTEM_ERROR.code))
   }
 }
+
 exports.changePassword = async (req, res, next) => {
   if (!ensureValidRequest(req, next)) return
 
@@ -607,13 +614,13 @@ exports.changePassword = async (req, res, next) => {
 
     if (!user) {
       await transaction.rollback()
-      return next(createControllerError(404, '?????', null, errorCode.NOT_FOUND.code))
+      return next(createControllerError(404, '用户不存在', null, errorCode.NOT_FOUND.code))
     }
 
     const isMatch = await bcrypt.compare(oldPassword, user.PasswordHash)
     if (!isMatch) {
       await transaction.rollback()
-      return next(createControllerError(400, '?????'))
+      return next(createControllerError(400, '原密码错误'))
     }
 
     const verification = await findValidVerificationCode({
@@ -625,7 +632,7 @@ exports.changePassword = async (req, res, next) => {
 
     if (!verification) {
       await transaction.rollback()
-      return next(createControllerError(400, '?????????'))
+      return next(createControllerError(400, '验证码错误或已过期'))
     }
 
     verification.Used = true
@@ -648,15 +655,16 @@ exports.changePassword = async (req, res, next) => {
       details: { passwordChanged: true, requireReLogin: true },
     })
 
-    return res.success({ requireReLogin: true }, '???????????')
+    return res.success({ requireReLogin: true }, '密码修改成功，请重新登录')
   } catch (err) {
     if (!transaction.finished) {
       await transaction.rollback()
     }
 
-    return next(createControllerError(500, err.message || '?????', err.message, errorCode.SYSTEM_ERROR.code))
+    return next(createControllerError(500, err.message || '服务器内部错误', err.message, errorCode.SYSTEM_ERROR.code))
   }
 }
+
 exports.logout = async (req, res, next) => {
   try {
     const token = req.authToken || extractAccessToken(req)
@@ -686,8 +694,8 @@ exports.logout = async (req, res, next) => {
       })
     }
 
-    return res.success(null, '??????')
+    return res.success(null, '退出成功')
   } catch (err) {
-    return next(createControllerError(500, err.message || '?????', err.message, errorCode.SYSTEM_ERROR.code))
+    return next(createControllerError(500, err.message || '服务器内部错误', err.message, errorCode.SYSTEM_ERROR.code))
   }
 }

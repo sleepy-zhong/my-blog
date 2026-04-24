@@ -1,17 +1,19 @@
-﻿const { SiteSetting } = require('../models')
+const { SiteSetting, Attachment } = require('../models')
 const errorCode = require('../middleware/errorCode')
-
-const DEFAULT_SETTINGS = Object.freeze({
-  SiteName: 'TechBlogDB',
-  Description: '一个技术博客系统',
-  LogoURL: '',
-  FaviconURL: '',
-  Analytics: '',
-  SocialLinks: [],
-})
 
 function trimTo(value, maxLength) {
   return String(value ?? '').trim().slice(0, maxLength)
+}
+
+function getDefaultSettings() {
+  return {
+    SiteName: trimTo(process.env.PUBLIC_SITE_NAME || 'TechBlogDB', 120),
+    Description: trimTo(process.env.PUBLIC_SITE_DESCRIPTION || '一个技术博客系统', 500),
+    LogoURL: trimTo(process.env.PUBLIC_LOGO_URL || '', 500),
+    FaviconURL: trimTo(process.env.PUBLIC_FAVICON_URL || '', 500),
+    Analytics: '',
+    SocialLinks: [],
+  }
 }
 
 function normalizeSocialLinks(value) {
@@ -42,23 +44,27 @@ function serializeSocialLinks(value) {
 }
 
 function toPublicPayload(setting) {
+  const defaults = getDefaultSettings()
+
   return {
     SiteSettingID: setting?.SiteSettingID ?? null,
-    SiteName: setting?.SiteName ?? DEFAULT_SETTINGS.SiteName,
-    Description: setting?.Description ?? DEFAULT_SETTINGS.Description,
-    LogoURL: setting?.LogoURL ?? DEFAULT_SETTINGS.LogoURL,
-    FaviconURL: setting?.FaviconURL ?? DEFAULT_SETTINGS.FaviconURL,
-    Analytics: setting?.Analytics ?? DEFAULT_SETTINGS.Analytics,
-    SocialLinks: normalizeSocialLinks(setting?.SocialLinks ?? DEFAULT_SETTINGS.SocialLinks),
+    SiteName: setting?.SiteName ?? defaults.SiteName,
+    Description: setting?.Description ?? defaults.Description,
+    LogoURL: setting?.LogoURL ?? defaults.LogoURL,
+    FaviconURL: setting?.FaviconURL ?? defaults.FaviconURL,
+    Analytics: setting?.Analytics ?? defaults.Analytics,
+    SocialLinks: normalizeSocialLinks(setting?.SocialLinks ?? defaults.SocialLinks),
     UpdatedAt: setting?.UpdatedAt ?? null,
     UpdatedBy: setting?.UpdatedBy ?? null,
   }
 }
 
 function sanitizePayload(body = {}) {
+  const defaults = getDefaultSettings()
+
   return {
-    siteName: trimTo(body.siteName ?? body.SiteName ?? DEFAULT_SETTINGS.SiteName, 120),
-    description: trimTo(body.description ?? body.Description ?? DEFAULT_SETTINGS.Description, 500),
+    siteName: trimTo(body.siteName ?? body.SiteName ?? defaults.SiteName, 120),
+    description: trimTo(body.description ?? body.Description ?? defaults.Description, 500),
     logoURL: trimTo(body.logoURL ?? body.LogoURL ?? '', 500),
     faviconURL: trimTo(body.faviconURL ?? body.FaviconURL ?? '', 500),
     analytics: String(body.analytics ?? body.Analytics ?? '').trim(),
@@ -75,6 +81,35 @@ function validatePayload(payload) {
   }
 }
 
+function parseAttachmentIdFromUrl(value) {
+  const input = String(value || '').trim()
+  if (!input) return null
+
+  const match = input.match(/\/api\/attachments\/(\d+)\/(?:preview|download)(?:\?.*)?$/i)
+  if (!match) return null
+
+  const attachmentId = Number(match[1])
+  return Number.isInteger(attachmentId) && attachmentId > 0 ? attachmentId : null
+}
+
+async function markSettingAssetsPublic(urls = []) {
+  const attachmentIds = Array.from(new Set(urls.map(parseAttachmentIdFromUrl).filter(Boolean)))
+  if (!attachmentIds.length) return
+
+  await Attachment.update(
+    {
+      IsTemporary: false,
+      TempKey: 'site-branding',
+    },
+    {
+      where: {
+        AttachmentID: attachmentIds,
+        IsDeleted: false,
+      },
+    },
+  )
+}
+
 exports.getSettings = async (_req, res, next) => {
   try {
     const setting = await SiteSetting.findOne({
@@ -82,6 +117,18 @@ exports.getSettings = async (_req, res, next) => {
     })
 
     res.success(toPublicPayload(setting), '获取系统设置成功')
+  } catch (error) {
+    next(error)
+  }
+}
+
+exports.getPublicSettings = async (_req, res, next) => {
+  try {
+    const setting = await SiteSetting.findOne({
+      order: [['SiteSettingID', 'ASC']],
+    })
+
+    res.success(toPublicPayload(setting), '获取公开站点设置成功')
   } catch (error) {
     next(error)
   }
@@ -115,6 +162,8 @@ exports.updateSettings = async (req, res, next) => {
         CreatedAt: new Date(),
       })
     }
+
+    await markSettingAssetsPublic([payload.logoURL, payload.faviconURL])
 
     res.success(toPublicPayload(setting), '保存系统设置成功')
   } catch (error) {

@@ -1,4 +1,5 @@
 import { defineStore as definePiniaStore } from 'pinia'
+import { getPublicSettings } from '../api/settings'
 import { getCurrentUser, logout as logoutApi } from '../api/user'
 
 export const AUTH_EXPIRED_EVENT = 'app:auth-expired'
@@ -210,6 +211,22 @@ export const useSettingsStore = definePiniaStore('settings', {
     logo: '',
   }),
   actions: {
+    applyPublicSettings(payload: Record<string, unknown> = {}) {
+      const siteName = String(payload.SiteName ?? payload.siteName ?? '').trim()
+      const logo = String(payload.LogoURL ?? payload.logoURL ?? '').trim()
+
+      if (siteName) {
+        this.siteName = siteName
+      }
+
+      this.logo = logo
+    },
+    async fetchPublicSettings() {
+      const response = await getPublicSettings()
+      const payload = (response?.data || response || {}) as Record<string, unknown>
+      this.applyPublicSettings(payload)
+      return payload
+    },
     setSiteName(name: string) {
       this.siteName = name
     },

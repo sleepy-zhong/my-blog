@@ -166,7 +166,7 @@
 
           <div class="form-actions cropper-actions">
             <button class="btn-secondary action-btn" @click="onCropCancel">取消</button>
-            <button class="btn-primary action-btn" @click="onCropConfirm">确定裁剪</button>
+            <button class="btn-primary action-btn" @click="onCropConfirm">确认裁剪</button>
           </div>
         </div>
       </div>
@@ -183,6 +183,7 @@ import StatusButton from '@/components/StatusButton.vue'
 import defaultAvatar from '../assets/icons/login-active.png'
 import { sendChangePasswordCode, updateProfile, updatePassword, updateEmail } from '@/api/user'
 import { useUserStore } from '@/store/user'
+import { resolveDisplayMessage } from '@/utils/message'
 import { resolveAvatarUrl } from '@/utils/avatar'
 
 const props = defineProps({
@@ -290,7 +291,7 @@ async function onChangePassword() {
       code: passwordForm.value.code
     })
     if (res.code === 0) {
-      showStatusMsg('success', res.message || '密码已更新，请重新登录')
+      showStatusMsg('success', resolveDisplayMessage(res.message, '密码已更新，请重新登录'))
       passwordForm.value = { oldPassword: '', newPassword: '', confirm: '', code: '' }
       userStore.clearToken()
       window.setTimeout(() => {
@@ -298,10 +299,10 @@ async function onChangePassword() {
         router.push('/login')
       }, 600)
     } else {
-      showStatusMsg('error', res.message || '修改失败')
+      showStatusMsg('error', resolveDisplayMessage(res.message, '修改失败'))
     }
   } catch (e) {
-    showStatusMsg('error', e?.response?.data?.message || '修改失败')
+    showStatusMsg('error', resolveDisplayMessage(e?.response?.data?.message, '修改失败'))
   } finally {
     loading.value = false
   }
@@ -335,12 +336,12 @@ async function onSendChangePasswordCode() {
     const res = await sendChangePasswordCode()
     if (res.code === 0) {
       startPasswordCodeTimer()
-      showStatusMsg('success', res.message || '验证码已发送')
+      showStatusMsg('success', resolveDisplayMessage(res.message, '验证码已发送'))
     } else {
-      showStatusMsg('error', res.message || '发送失败')
+      showStatusMsg('error', resolveDisplayMessage(res.message, '发送失败'))
     }
   } catch (e) {
-    showStatusMsg('error', e?.response?.data?.message || '发送失败')
+    showStatusMsg('error', resolveDisplayMessage(e?.response?.data?.message, '发送失败'))
   } finally {
     sendingPasswordCode.value = false
   }
@@ -360,13 +361,13 @@ async function onChangeEmail() {
     const res = await updateEmail({ email: emailForm.value.email })
     if (res.code === 0) {
       await userStore.fetchUser(true)
-      showStatusMsg('success', '邮箱已更新')
+      showStatusMsg('success', resolveDisplayMessage(res.message, '邮箱已更新'))
       emailForm.value.email = ''
     } else {
-      showStatusMsg('error', res.message || '更新失败')
+      showStatusMsg('error', resolveDisplayMessage(res.message, '更新失败'))
     }
   } catch (e) {
-    showStatusMsg('error', e?.response?.data?.message || '更新失败')
+    showStatusMsg('error', resolveDisplayMessage(e?.response?.data?.message, '更新失败'))
   } finally {
     loading.value = false
   }
@@ -418,11 +419,11 @@ async function onSave() {
         emit('close')
       }, 800)
     } else {
-      showStatusMsg('error', res.data?.message || '保存失败')
+      showStatusMsg('error', resolveDisplayMessage(res.data?.message, '保存失败'))
       loading.value = false
     }
   } catch (e) {
-    showStatusMsg('error', e?.response?.data?.message || '保存失败')
+    showStatusMsg('error', resolveDisplayMessage(e?.response?.data?.message, '保存失败'))
     loading.value = false
   }
 }

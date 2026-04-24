@@ -3,9 +3,9 @@
     <div class="nav-panel">
       <router-link to="/" class="brand-link">
         <span class="brand-badge">
-          <img :src="homeActiveIcon" alt="首页" class="brand-icon" />
+          <img :src="brandLogoSrc" :alt="brandName" class="brand-icon" @error="onBrandLogoError" />
         </span>
-        <span class="brand-text">MyBlog</span>
+        <span class="brand-text">{{ brandName }}</span>
       </router-link>
 
       <div class="nav-links scrollbar-none">
@@ -78,6 +78,8 @@
 </template>
 
 <script setup>
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import homeIcon from '../assets/icons/home .png'
 import homeActiveIcon from '../assets/icons/home-active.png'
 import essayIcon from '../assets/icons/essay.png'
@@ -88,14 +90,13 @@ import adminIcon from '../assets/icons/back-end.png'
 import adminActiveIcon from '../assets/icons/back-end-active.png'
 import publishIcon from '../assets/icons/publish.png'
 import publishActiveIcon from '../assets/icons/publish-active.png'
-import { useUserStore } from '@/store/user'
-import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import defaultAvatar from '../assets/icons/login-active.png'
+import { useSettingsStore, useUserStore } from '@/store/user'
 import ProfilePanel from './ProfilePanel.vue'
 import { resolveAvatarUrl } from '@/utils/avatar'
 
 const userStore = useUserStore()
+const settingsStore = useSettingsStore()
 const route = useRoute()
 
 const isLogin = computed(() => userStore.isLogin)
@@ -107,8 +108,16 @@ const canPublish = computed(() => roles.value.some(r => ['admin', 'editor', 'aut
 const showProfile = ref(false)
 const profileRoot = ref(null)
 const profilePanelVisible = ref(false)
-const currentUserAvatarSrc = computed(() => {
-  return resolveAvatarUrl(userStore.user?.AvatarURL) || defaultAvatar
+const brandLogoFailed = ref(false)
+
+const currentUserAvatarSrc = computed(() => resolveAvatarUrl(userStore.user?.AvatarURL) || defaultAvatar)
+const brandName = computed(() => settingsStore.siteName || 'MyBlog')
+const brandLogoSrc = computed(() => {
+  if (brandLogoFailed.value) {
+    return homeActiveIcon
+  }
+
+  return settingsStore.logo || homeActiveIcon
 })
 
 function isActive(path) {
@@ -135,6 +144,13 @@ function logout() {
 function onProfileAvatarError(event) {
   if (event?.target) {
     event.target.src = defaultAvatar
+  }
+}
+
+function onBrandLogoError(event) {
+  brandLogoFailed.value = true
+  if (event?.target) {
+    event.target.src = homeActiveIcon
   }
 }
 
@@ -165,6 +181,10 @@ onBeforeUnmount(() => {
 
 watch(() => route.fullPath, () => {
   showProfile.value = false
+})
+
+watch(() => settingsStore.logo, () => {
+  brandLogoFailed.value = false
 })
 </script>
 
@@ -235,13 +255,15 @@ watch(() => route.fullPath, () => {
   width: 40px;
   height: 40px;
   border-radius: 14px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 32%, transparent), color-mix(in srgb, var(--accent-2) 26%, transparent));
-  box-shadow: 0 14px 28px color-mix(in srgb, var(--glow) 50%, transparent);
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .brand-icon {
-  width: 20px;
-  height: 20px;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
 }
 
 .brand-text {
@@ -513,8 +535,8 @@ watch(() => route.fullPath, () => {
   }
 
   .brand-icon {
-    width: 18px;
-    height: 18px;
+    width: 44px;
+    height: 44px;
   }
 
   .nav-links {

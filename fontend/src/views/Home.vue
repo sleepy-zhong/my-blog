@@ -1,5 +1,5 @@
 <template>
-  <div class="home-page" :style="pageVars" @pointermove="updateSpotlight">
+  <div class="home-page" :class="{ 'light-visual-theme': isLightVisualTheme }" :style="pageVars" @pointermove="updateSpotlight">
     <div class="home-shell">
       <section id="hero" class="hero-screen">
         <div
@@ -426,6 +426,10 @@ const pageVars = computed<Record<string, string>>(() => ({
 
 const currentThemeLabel = computed(() => {
   return themeOptions.find(item => item.id === activeTheme.value)?.label || 'Neon'
+})
+
+const isLightVisualTheme = computed(() => {
+  return ['laser', 'volt', 'bloom', 'mint'].includes(activeTheme.value)
 })
 
 const cursorAuraStyle = computed<Record<string, string>>(() => ({
@@ -875,6 +879,27 @@ onBeforeUnmount(() => {
 <style scoped>
 .home-page {
   --shadow: 0 40px 120px rgba(0, 0, 0, 0.44);
+  --surface-panel: linear-gradient(180deg, rgba(9, 14, 28, 0.76), rgba(7, 9, 18, 0.92));
+  --surface-panel-soft: linear-gradient(180deg, rgba(10, 14, 28, 0.74), rgba(7, 9, 18, 0.92));
+  --surface-panel-strong: linear-gradient(180deg, rgba(8, 12, 22, 0.74), rgba(6, 8, 16, 0.9));
+  --surface-pill: rgba(6, 9, 16, 0.76);
+  --surface-pill-soft: rgba(255, 255, 255, 0.05);
+  --surface-chip: linear-gradient(180deg, rgba(9, 13, 24, 0.7), rgba(6, 8, 16, 0.92));
+  --surface-chip-label: rgba(5, 8, 16, 0.84);
+  --surface-note: linear-gradient(180deg, rgba(10, 14, 26, 0.66), rgba(7, 9, 16, 0.9));
+  --surface-article: linear-gradient(180deg, rgba(10, 14, 24, 0.74), rgba(6, 8, 14, 0.94));
+  --surface-speech: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent-2) 8%, transparent));
+  --surface-orb:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(16, 20, 34, 0.92), rgba(8, 10, 18, 0.96));
+  --surface-orb-border: rgba(255, 255, 255, 0.12);
+  --surface-orb-shadow:
+    inset 0 0 36px rgba(255, 255, 255, 0.04),
+    0 32px 70px rgba(0, 0, 0, 0.34);
+  --surface-copy-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
+  --surface-card-shadow: 0 18px 46px rgba(0, 0, 0, 0.18);
+  --surface-core-shadow: 0 34px 90px rgba(0, 0, 0, 0.34);
+  --surface-text-strong: #edf2ff;
   position: relative;
   width: 100%;
   min-height: 100vh;
@@ -914,6 +939,54 @@ onBeforeUnmount(() => {
   opacity: 0.13;
 }
 
+.home-page.light-visual-theme {
+  --shadow: 0 34px 100px rgba(32, 75, 98, 0.18);
+  --surface-panel: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(249, 252, 255, 0.9));
+  --surface-panel-soft: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 251, 255, 0.9));
+  --surface-panel-strong: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(244, 249, 255, 0.92));
+  --surface-pill: linear-gradient(135deg, rgba(255, 255, 255, 0.92), color-mix(in srgb, var(--accent) 10%, white));
+  --surface-pill-soft: rgba(255, 255, 255, 0.82);
+  --surface-chip: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(245, 251, 255, 0.9));
+  --surface-chip-label: linear-gradient(135deg, rgba(255, 255, 255, 0.96), color-mix(in srgb, var(--accent) 10%, white));
+  --surface-note: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(247, 250, 255, 0.9));
+  --surface-article: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 251, 255, 0.92));
+  --surface-speech: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, white), color-mix(in srgb, var(--accent-2) 10%, white));
+  --surface-orb:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.96), transparent 34%),
+    radial-gradient(circle at 50% 68%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(244, 249, 255, 0.86));
+  --surface-orb-border: color-mix(in srgb, var(--accent) 18%, rgba(255, 255, 255, 0.92));
+  --surface-orb-shadow:
+    inset 0 0 30px rgba(255, 255, 255, 0.48),
+    0 24px 48px color-mix(in srgb, var(--accent) 18%, transparent);
+  --surface-copy-shadow: 0 20px 52px rgba(69, 102, 122, 0.14);
+  --surface-card-shadow: 0 18px 42px rgba(69, 102, 122, 0.12);
+  --surface-core-shadow: 0 28px 64px rgba(69, 102, 122, 0.16);
+  --surface-text-strong: var(--text);
+  background:
+    radial-gradient(circle at 10% 14%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 22%),
+    radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 24%),
+    radial-gradient(circle at 48% 86%, color-mix(in srgb, var(--accent-3) 18%, transparent), transparent 28%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 48%, var(--bg-3) 100%);
+}
+
+.home-page.light-visual-theme::before {
+  background:
+    radial-gradient(circle at var(--spotlight-x) var(--spotlight-y), rgba(255, 255, 255, 0.72), transparent 8%),
+    radial-gradient(circle at var(--spotlight-x) var(--spotlight-y), color-mix(in srgb, var(--accent) 18%, transparent), transparent 22%),
+    radial-gradient(circle at 18% 74%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 20%),
+    radial-gradient(circle at 82% 62%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 22%);
+  mix-blend-mode: multiply;
+  opacity: 0.9;
+}
+
+.home-page.light-visual-theme::after {
+  background-image:
+    repeating-linear-gradient(180deg, rgba(22, 70, 92, 0.045) 0 1px, transparent 1px 9px),
+    linear-gradient(120deg, transparent 0 44%, rgba(255, 255, 255, 0.34) 50%, transparent 56%);
+  opacity: 0.22;
+}
+
 .home-shell {
   position: relative;
   z-index: 1;
@@ -929,6 +1002,11 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, rgba(5, 6, 12, 0.92)), color-mix(in srgb, var(--panel-strong) 92%, rgba(4, 5, 10, 0.95)));
   backdrop-filter: blur(18px);
   box-shadow: var(--shadow);
+}
+
+.home-page.light-visual-theme .panel {
+  border-color: color-mix(in srgb, var(--line-strong) 70%, rgba(255, 255, 255, 0.7));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 96%, white), color-mix(in srgb, var(--panel-strong) 96%, white));
 }
 
 .hero-screen,
@@ -959,7 +1037,11 @@ onBeforeUnmount(() => {
 }
 
 .theme-switch {
-  padding: 11px 14px;
+  min-width: 88px;
+  padding: 11px 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
 }
 
 .theme-switch:hover,
@@ -969,6 +1051,55 @@ onBeforeUnmount(() => {
   border-color: color-mix(in srgb, var(--accent) 56%, transparent);
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, transparent), color-mix(in srgb, var(--accent-2) 16%, transparent));
   box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.home-page.light-visual-theme .theme-switch,
+.home-page.light-visual-theme .console-btn,
+.home-page.light-visual-theme .status-pill {
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--line) 78%, rgba(255, 255, 255, 0.86));
+}
+
+.home-page.light-visual-theme .theme-switch:hover,
+.home-page.light-visual-theme .theme-switch.active,
+.home-page.light-visual-theme .console-btn:hover,
+.home-page.light-visual-theme .console-btn.primary {
+  color: var(--text);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, white), color-mix(in srgb, var(--accent-2) 18%, white));
+  border-color: color-mix(in srgb, var(--accent) 58%, white);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.home-page.light-visual-theme .tool-card,
+.home-page.light-visual-theme .stage-copy,
+.home-page.light-visual-theme .speech-card,
+.home-page.light-visual-theme .core-card,
+.home-page.light-visual-theme .article-card,
+.home-page.light-visual-theme .featured-card,
+.home-page.light-visual-theme .latest-panel {
+  background: color-mix(in srgb, var(--panel) 88%, white);
+  border-color: color-mix(in srgb, var(--line) 70%, rgba(255, 255, 255, 0.82));
+  box-shadow: 0 24px 70px rgba(41, 79, 104, 0.16);
+}
+
+.home-page.light-visual-theme .stage-copy p,
+.home-page.light-visual-theme .section-head p,
+.home-page.light-visual-theme .article-card p,
+.home-page.light-visual-theme .tool-card p,
+.home-page.light-visual-theme .speech-card,
+.home-page.light-visual-theme .featured-copy p {
+  color: var(--muted);
+}
+
+.home-page.light-visual-theme .stage-label,
+.home-page.light-visual-theme .article-tag,
+.home-page.light-visual-theme .section-kicker {
+  color: color-mix(in srgb, var(--accent) 76%, #13283a);
+}
+
+.theme-switches {
+  align-items: center;
 }
 
 .stage-copy p,
@@ -1234,9 +1365,9 @@ onBeforeUnmount(() => {
   max-width: 520px;
   padding: 22px 24px;
   border-radius: 28px;
-  background: linear-gradient(180deg, rgba(9, 14, 28, 0.76), rgba(7, 9, 18, 0.92));
+  background: var(--surface-panel);
   border: 1px solid color-mix(in srgb, var(--line-strong) 74%, rgba(255, 255, 255, 0.1));
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--surface-copy-shadow);
 }
 
 .stage-label {
@@ -1283,9 +1414,9 @@ onBeforeUnmount(() => {
 .tool-card {
   padding: 18px 18px 16px;
   border-radius: 26px;
-  background: linear-gradient(180deg, rgba(10, 14, 28, 0.74), rgba(7, 9, 18, 0.92));
+  background: var(--surface-panel-soft);
   border: 1px solid color-mix(in srgb, var(--line) 82%, rgba(255, 255, 255, 0.08));
-  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--surface-card-shadow);
 }
 
 .tool-card strong {
@@ -1309,7 +1440,7 @@ onBeforeUnmount(() => {
   padding: 12px 16px;
   border: 1px solid color-mix(in srgb, var(--line-strong) 80%, rgba(255, 255, 255, 0.08));
   border-radius: 999px;
-  background: rgba(6, 9, 16, 0.76);
+  background: var(--surface-pill);
   color: var(--text);
   cursor: pointer;
   transition: transform 180ms ease, background 180ms ease;
@@ -1358,9 +1489,9 @@ onBeforeUnmount(() => {
   padding: 20px 22px 22px;
   border-radius: 34px;
   border: 1px solid color-mix(in srgb, var(--line-strong) 88%, rgba(255, 255, 255, 0.1));
-  background: linear-gradient(180deg, rgba(8, 12, 22, 0.74), rgba(6, 8, 16, 0.9));
+  background: var(--surface-panel-strong);
   backdrop-filter: blur(20px);
-  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.34);
+  box-shadow: var(--surface-core-shadow);
   pointer-events: auto;
 }
 
@@ -1465,13 +1596,9 @@ onBeforeUnmount(() => {
   place-items: center;
   border-radius: 50%;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.14), transparent 32%),
-    linear-gradient(180deg, rgba(16, 20, 34, 0.92), rgba(8, 10, 18, 0.96));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    inset 0 0 36px rgba(255, 255, 255, 0.04),
-    0 32px 70px rgba(0, 0, 0, 0.34);
+  background: var(--surface-orb);
+  border: 1px solid var(--surface-orb-border);
+  box-shadow: var(--surface-orb-shadow);
 }
 
 .planet-screen::before {
@@ -1633,9 +1760,9 @@ onBeforeUnmount(() => {
   min-height: 82px;
   padding: 16px 18px;
   border-radius: 24px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent-2) 8%, transparent));
+  background: var(--surface-speech);
   border: 1px solid color-mix(in srgb, var(--line-strong) 78%, rgba(255, 255, 255, 0.1));
-  color: #edf2ff;
+  color: var(--surface-text-strong);
 }
 
 .cat-chip {
@@ -1645,7 +1772,7 @@ onBeforeUnmount(() => {
   padding: 10px;
   border: 0;
   border-radius: 30px;
-  background: linear-gradient(180deg, rgba(9, 13, 24, 0.7), rgba(6, 8, 16, 0.92));
+  background: var(--surface-chip);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(14px);
   cursor: pointer;
@@ -1722,9 +1849,9 @@ onBeforeUnmount(() => {
   z-index: 3;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(5, 8, 16, 0.84);
+  background: var(--surface-chip-label);
   border: 1px solid color-mix(in srgb, var(--line) 90%, rgba(255, 255, 255, 0.08));
-  color: #f7fbff;
+  color: var(--surface-text-strong);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1770,7 +1897,8 @@ onBeforeUnmount(() => {
   padding: 16px 18px;
   border-radius: 24px;
   border: 1px solid color-mix(in srgb, var(--line) 82%, rgba(255, 255, 255, 0.08));
-  background: linear-gradient(180deg, rgba(10, 14, 26, 0.66), rgba(7, 9, 16, 0.9));
+  background: var(--surface-note);
+  box-shadow: var(--surface-card-shadow);
 }
 
 .section-note span {
@@ -1801,9 +1929,10 @@ onBeforeUnmount(() => {
   padding: 22px;
   border-radius: 28px;
   border: 1px solid color-mix(in srgb, var(--line) 88%, rgba(255, 255, 255, 0.08));
-  background: linear-gradient(180deg, rgba(10, 14, 24, 0.74), rgba(6, 8, 14, 0.94));
+  background: var(--surface-article);
   color: inherit;
   text-decoration: none;
+  box-shadow: var(--surface-card-shadow);
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
@@ -1883,7 +2012,7 @@ onBeforeUnmount(() => {
 .article-meta span {
   padding: 9px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-pill-soft);
   color: var(--muted);
   font-size: 13px;
 }
@@ -2505,6 +2634,18 @@ onBeforeUnmount(() => {
     border-radius: 12px;
   }
 
+  .theme-switches {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .theme-switch {
+    min-width: 0;
+    width: 100%;
+  }
+
   .cat-chip {
     width: 72px;
     height: 72px;
@@ -2645,6 +2786,10 @@ onBeforeUnmount(() => {
     min-height: 34px;
     padding: 7px 9px;
     font-size: 11px;
+  }
+
+  .theme-switches {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .featured-visual {

@@ -199,6 +199,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StatusButton from '@/components/StatusButton.vue'
 import { useUserStore } from '@/store/user'
+import { resolveDisplayMessage } from '@/utils/message'
 import {
   forgotPassword,
   login,
@@ -335,12 +336,12 @@ async function onSendLoginCode() {
 
     if (res.code === 0) {
       startCountdown()
-      showStatusMsg('success', res.message || '验证码已发送')
+      showStatusMsg('success', resolveDisplayMessage(res.message, '验证码已发送'))
     } else {
-      showStatusMsg('error', res.message || '发送失败')
+      showStatusMsg('error', resolveDisplayMessage(res.message, '发送失败'))
     }
   } catch (error: any) {
-    showStatusMsg('error', error?.response?.data?.message || '发送失败')
+    showStatusMsg('error', resolveDisplayMessage(error?.response?.data?.message, '发送失败'))
   } finally {
     sendingCode.value = false
   }
@@ -366,17 +367,17 @@ async function onLogin() {
     })
 
     if (res.code !== 0) {
-      showStatusMsg('error', res.message || '登录失败')
+      showStatusMsg('error', resolveDisplayMessage(res.message, '登录失败'))
       return
     }
 
     await userStore.fetchUser(true)
-    showStatusMsg('success', res.message || '登录成功')
+    showStatusMsg('success', resolveDisplayMessage(res.message, '登录成功'))
 
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     router.replace(redirect || '/')
   } catch (error: any) {
-    showStatusMsg('error', error?.response?.data?.message || '登录失败')
+    showStatusMsg('error', resolveDisplayMessage(error?.response?.data?.message, '登录失败'))
   } finally {
     loading.value = false
   }
@@ -398,12 +399,12 @@ async function onSendRegisterCode() {
     const res = await sendRegisterCode({ email: registerForm.value.email })
     if (res.code === 0) {
       startCountdown()
-      showStatusMsg('success', res.message || '验证码已发送')
+      showStatusMsg('success', resolveDisplayMessage(res.message, '验证码已发送'))
     } else {
-      showStatusMsg('error', res.message || '发送失败')
+      showStatusMsg('error', resolveDisplayMessage(res.message, '发送失败'))
     }
   } catch (error: any) {
-    showStatusMsg('error', error?.response?.data?.message || '发送失败')
+    showStatusMsg('error', resolveDisplayMessage(error?.response?.data?.message, '发送失败'))
   } finally {
     sendingCode.value = false
   }
@@ -444,7 +445,7 @@ async function onRegister() {
     })
 
     if (res.code !== 0) {
-      showStatusMsg('error', res.message || '注册失败')
+      showStatusMsg('error', resolveDisplayMessage(res.message, '注册失败'))
       return
     }
 
@@ -452,9 +453,9 @@ async function onRegister() {
     loginForm.value.password = ''
     loginForm.value.code = ''
     switchMode('login')
-    showStatusMsg('success', res.message || '注册成功')
+    showStatusMsg('success', resolveDisplayMessage(res.message, '注册成功'))
   } catch (error: any) {
-    showStatusMsg('error', error?.response?.data?.message || '注册失败')
+    showStatusMsg('error', resolveDisplayMessage(error?.response?.data?.message, '注册失败'))
   } finally {
     loading.value = false
   }
@@ -476,12 +477,12 @@ async function onSendForgotCode() {
     const res = await sendForgotPasswordCode({ email: forgotForm.value.email })
     if (res.code === 0) {
       startCountdown()
-      showStatusMsg('success', res.message || '验证码已发送')
+      showStatusMsg('success', resolveDisplayMessage(res.message, '验证码已发送'))
     } else {
-      showStatusMsg('error', res.message || '发送失败')
+      showStatusMsg('error', resolveDisplayMessage(res.message, '发送失败'))
     }
   } catch (error: any) {
-    showStatusMsg('error', error?.response?.data?.message || '发送失败')
+    showStatusMsg('error', resolveDisplayMessage(error?.response?.data?.message, '发送失败'))
   } finally {
     sendingCode.value = false
   }
@@ -519,7 +520,7 @@ async function onForgotPassword() {
     })
 
     if (res.code !== 0) {
-      showStatusMsg('error', res.message || '重置失败')
+      showStatusMsg('error', resolveDisplayMessage(res.message, '重置失败'))
       return
     }
 
@@ -527,9 +528,9 @@ async function onForgotPassword() {
     loginForm.value.password = ''
     loginForm.value.code = ''
     switchMode('login')
-    showStatusMsg('success', res.message || '密码已重置，请重新登录')
+    showStatusMsg('success', resolveDisplayMessage(res.message, '密码已重置，请重新登录'))
   } catch (error: any) {
-    showStatusMsg('error', error?.response?.data?.message || '重置失败')
+    showStatusMsg('error', resolveDisplayMessage(error?.response?.data?.message, '重置失败'))
   } finally {
     loading.value = false
   }

@@ -733,9 +733,45 @@ onMounted(() => {
 
 <style scoped>
 .user-manage {
+  --admin-surface-main: color-mix(in srgb, var(--panel-strong) 88%, transparent);
+  --admin-surface-card: color-mix(in srgb, var(--panel) 74%, white);
+  --admin-surface-card-strong: color-mix(in srgb, var(--panel-strong) 82%, white);
+  --admin-surface-input: color-mix(in srgb, var(--panel) 70%, white);
+  --admin-surface-button: color-mix(in srgb, var(--panel) 62%, white);
+  --admin-surface-button-hover: color-mix(in srgb, var(--accent) 10%, white);
+  --admin-surface-danger: color-mix(in srgb, var(--danger) 18%, white);
+  --admin-surface-success: color-mix(in srgb, var(--success) 18%, white);
+  --admin-surface-accent: color-mix(in srgb, var(--accent) 16%, white);
+  --admin-surface-muted: color-mix(in srgb, var(--panel) 54%, white);
+  --admin-border: color-mix(in srgb, var(--line) 56%, rgba(255, 255, 255, 0.14));
+  --admin-border-strong: color-mix(in srgb, var(--line-strong) 54%, rgba(255, 255, 255, 0.2));
+  --admin-shadow: 0 20px 60px color-mix(in srgb, var(--glow) 16%, rgba(0, 0, 0, 0.16));
+  --admin-button-primary-text: color-mix(in srgb, var(--text) 88%, white);
   width: 100%;
   padding: 24px 0 40px;
   color: var(--text);
+}
+
+.user-manage :deep(.app-select__trigger),
+.user-manage :deep(.app-select__menu) {
+  background: var(--admin-surface-input);
+  border-color: var(--admin-border);
+  color: var(--text);
+}
+
+.user-manage :deep(.app-select__trigger:hover),
+.user-manage :deep(.app-select__trigger.is-open) {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--admin-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.user-manage :deep(.app-select__option) {
+  color: var(--text);
+}
+
+.user-manage :deep(.app-select__option:hover),
+.user-manage :deep(.app-select__option.is-active) {
+  background: color-mix(in srgb, var(--accent) 14%, white);
 }
 
 .hero-panel,
@@ -745,10 +781,10 @@ onMounted(() => {
 .table-panel,
 .pager,
 .modal-card {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(10, 15, 30, 0.76);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-main);
   backdrop-filter: blur(18px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--admin-shadow);
 }
 
 .hero-panel,
@@ -786,7 +822,7 @@ onMounted(() => {
   display: inline-flex;
   padding: 7px 12px;
   border-radius: 999px;
-  background: rgba(120, 163, 255, 0.12);
+  background: color-mix(in srgb, var(--accent) 14%, white);
   color: var(--accent);
   font-size: 12px;
   letter-spacing: 0.16em;
@@ -816,8 +852,9 @@ onMounted(() => {
 .stat-card {
   padding: 22px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .stat-card span {
@@ -859,12 +896,28 @@ onMounted(() => {
   width: 100%;
   padding: 0 14px;
   border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-input);
+  color: var(--text);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
 .textarea {
   min-height: 120px;
   padding: 14px;
   resize: vertical;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: color-mix(in srgb, var(--muted) 88%, white);
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--admin-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .btn-primary,
@@ -881,27 +934,41 @@ onMounted(() => {
 
 .btn-primary {
   background: linear-gradient(135deg, rgba(120, 163, 255, 0.92), rgba(255, 123, 176, 0.78));
-  color: #fff;
+  color: var(--admin-button-primary-text);
+  box-shadow: 0 14px 32px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .btn-secondary,
 .btn-icon {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--admin-surface-button);
   color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--admin-border);
 }
 
 .btn-danger,
 .btn-icon.danger {
-  background: rgba(255, 128, 160, 0.12);
-  color: #ffc4d6;
-  border: 1px solid rgba(255, 128, 160, 0.18);
+  background: var(--admin-surface-danger);
+  color: color-mix(in srgb, var(--danger) 82%, white);
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, white);
 }
 
 .btn-primary:disabled,
 .btn-secondary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-danger:hover,
+.btn-icon:hover {
+  transform: translateY(-1px);
+}
+
+.btn-secondary:hover,
+.btn-icon:hover {
+  background: var(--admin-surface-button-hover);
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--admin-border));
 }
 
 .table-panel {
@@ -917,7 +984,7 @@ onMounted(() => {
 .user-table th,
 .user-table td {
   padding: 14px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--admin-border);
   text-align: left;
   vertical-align: top;
 }
@@ -951,13 +1018,13 @@ onMounted(() => {
   height: 42px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--admin-border-strong);
 }
 
 .avatar.fallback {
   display: grid;
   place-items: center;
-  background: rgba(120, 163, 255, 0.22);
+  background: color-mix(in srgb, var(--accent) 18%, white);
   color: var(--text);
   font-weight: 700;
 }
@@ -972,23 +1039,23 @@ onMounted(() => {
 }
 
 .pill.success {
-  background: rgba(115, 239, 198, 0.14);
+  background: var(--admin-surface-success);
   color: var(--success);
 }
 
 .pill.danger {
-  background: rgba(255, 147, 183, 0.14);
+  background: var(--admin-surface-danger);
   color: var(--danger);
 }
 
 .pill.accent {
-  background: rgba(120, 163, 255, 0.14);
+  background: var(--admin-surface-accent);
   color: var(--accent);
 }
 
 .pill.muted,
 .role-pill.muted {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--admin-surface-muted);
   color: var(--muted);
 }
 
@@ -999,7 +1066,7 @@ onMounted(() => {
 }
 
 .role-pill {
-  background: rgba(103, 239, 216, 0.12);
+  background: color-mix(in srgb, var(--accent-3) 12%, white);
   color: var(--accent-3);
 }
 
@@ -1019,9 +1086,9 @@ onMounted(() => {
 }
 
 .mobile-card {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--admin-border);
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--admin-surface-card);
   padding: 16px;
 }
 
@@ -1065,7 +1132,7 @@ onMounted(() => {
 .mobile-section {
   padding: 12px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--admin-surface-card-strong);
 }
 
 .mobile-info-item span,
@@ -1148,7 +1215,8 @@ onMounted(() => {
   min-height: 42px;
   padding: 0 12px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--admin-surface-card);
+  border: 1px solid var(--admin-border);
 }
 
 .detail-grid {
@@ -1158,7 +1226,8 @@ onMounted(() => {
 .detail-item {
   padding: 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--admin-surface-card-strong);
+  border: 1px solid var(--admin-border);
 }
 
 .detail-item span {

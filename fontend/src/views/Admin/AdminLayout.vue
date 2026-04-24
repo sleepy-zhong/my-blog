@@ -325,11 +325,20 @@ watch(() => route.fullPath, () => {
     left: 0;
     bottom: 0;
     width: min(320px, 86vw);
+    max-height: 100dvh;
     border-radius: 0 28px 28px 0;
     transform: translateX(-110%);
     transition: transform 220ms ease;
     overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     padding-top: 72px;
+  }
+
+  .sidebar-nav {
+    padding-bottom: 24px;
   }
 
   .admin-sidebar.is-open {

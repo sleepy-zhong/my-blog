@@ -7,6 +7,7 @@ const { PUBLIC_SETTINGS_CACHE_KEY, PUBLIC_SETTINGS_CACHE_PATTERNS } = require('.
 
 const router = express.Router()
 
+router.get('/public', cacheMiddleware(PUBLIC_SETTINGS_CACHE_KEY, 1800), settingsController.getPublicSettings)
 router.get('/', auth, permission.isEditorOrAdmin, cacheMiddleware(PUBLIC_SETTINGS_CACHE_KEY, 1800), settingsController.getSettings)
 router.put('/', auth, permission.isEditorOrAdmin, invalidateCacheMiddleware(PUBLIC_SETTINGS_CACHE_PATTERNS), settingsController.updateSettings)
 
